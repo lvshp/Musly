@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -32,7 +33,7 @@ import '../providers/library_provider.dart';
 
 enum RepeatMode { off, all, one }
 
-class PlayerProvider extends ChangeNotifier {
+class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
   final SubsonicService _subsonicService;
   late final StorageService _storageService;
   final MuslyAudioHandler _audioHandler;
@@ -146,6 +147,20 @@ class PlayerProvider extends ChangeNotifier {
     }
 
     _restoreQueueState();
+
+    // Register app lifecycle observer to save state on iOS when app goes to background
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  /// Handle app lifecycle changes - save queue state when going to background (important for iOS)
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      debugPrint(
+          '[Player] App lifecycle state: $state - saving queue state immediately');
+      _saveQueueStateImmediate();
+    }
   }
 
   /// Connect [MuslyAudioHandler] lock-screen commands back to this provider.
@@ -2660,6 +2675,8 @@ class PlayerProvider extends ChangeNotifier {
     _durationSub?.cancel();
     _currentIndexSub?.cancel();
     _positionController.close();
+    // Remove app lifecycle observer
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
