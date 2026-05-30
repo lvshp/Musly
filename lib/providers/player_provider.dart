@@ -165,18 +165,24 @@ class PlayerProvider extends ChangeNotifier {
   void _saveQueueState() {
     _persistDebounceTimer?.cancel();
     _persistDebounceTimer = Timer(const Duration(milliseconds: 200), () async {
-      try {
-        _prefs ??= await SharedPreferences.getInstance();
-        if (_prefs == null) return;
-        final queueJson = _queue.map((s) => s.toJson()).toList();
-        await _prefs!.setString(_keyQueue, jsonEncode(queueJson));
-        await _prefs!.setInt(_keyQueueIndex, _currentIndex);
-        await _prefs!.setString(_keyQueueSongId, _currentSong?.id ?? '');
-        await _prefs!.setInt(_keyQueuePosition, _position.inMilliseconds);
-      } catch (e) {
-        debugPrint('Error saving queue state: $e');
-      }
+      await _saveQueueStateImmediate();
     });
+  }
+
+  Future<void> _saveQueueStateImmediate() async {
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+      if (_prefs == null) return;
+      final queueJson = _queue.map((s) => s.toJson()).toList();
+      await _prefs!.setString(_keyQueue, jsonEncode(queueJson));
+      await _prefs!.setInt(_keyQueueIndex, _currentIndex);
+      await _prefs!.setString(_keyQueueSongId, _currentSong?.id ?? '');
+      await _prefs!.setInt(_keyQueuePosition, _position.inMilliseconds);
+      debugPrint(
+          'Queue state saved: index $_currentIndex, position $_position');
+    } catch (e) {
+      debugPrint('Error saving queue state: $e');
+    }
   }
 
   Future<void> _restoreQueueState() async {
@@ -2613,6 +2619,8 @@ class PlayerProvider extends ChangeNotifier {
     _sleepTimer?.cancel();
     _sleepTimerFadeTimer?.cancel();
     _sleepTimerFadePeriodicTimer?.cancel();
+    // Save queue state immediately before cancelling the debounce timer
+    _saveQueueStateImmediate();
     _persistDebounceTimer?.cancel();
     _jukeboxPollTimer?.cancel();
     _jukeboxService.removeListener(_onJukeboxEnabledChanged);
