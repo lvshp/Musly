@@ -18,6 +18,7 @@ import '../providers/library_provider.dart';
 import '../services/subsonic_service.dart';
 import '../services/player_ui_settings_service.dart';
 import '../widgets/star_rating_widget.dart';
+import '../widgets/dolby_atmos_badge.dart';
 import '../theme/app_theme.dart';
 import '../utils/navigation_helper.dart';
 import '../utils/screen_helper.dart';
@@ -1936,7 +1937,7 @@ class _AlbumArtworkSectionState extends State<_AlbumArtworkSection>
                   offset: const Offset(0, 20),
                 ),
               ];
-        
+
         Widget artworkWidget = Padding(
           padding: const EdgeInsets.symmetric(horizontal: 40),
           child: SizedBox(
@@ -1950,45 +1951,46 @@ class _AlbumArtworkSectionState extends State<_AlbumArtworkSection>
                 ),
                 child: ClipRRect(
                   borderRadius: borderRadius,
-              child: widget.imageUrl.isNotEmpty
-                  ? isLocalFilePath(widget.imageUrl)
-                      ? Image.file(
-                          File(widget.imageUrl),
-                          key: ValueKey(widget.imageUrl),
-                          fit: BoxFit.contain,
-                          cacheWidth: 1200,
-                          errorBuilder: (ctx, e, _) =>
-                              _buildNoArtPlaceholder(ctx),
-                        )
-                      : CachedNetworkImage(
-                          key: ValueKey(widget.imageUrl),
-                          imageUrl: widget.imageUrl,
-                          fit: BoxFit.contain,
-                          memCacheWidth: 1200,
-                          maxWidthDiskCache: 1200,
-                          maxHeightDiskCache: 1200,
-                          useOldImageOnUrlChange: true,
-                          fadeInDuration: Duration.zero,
-                          fadeOutDuration: Duration.zero,
-                          placeholder: (ctx, url) =>
-                              widget.thumbnailUrl != null && widget.thumbnailUrl!.isNotEmpty
-                                  ? CachedNetworkImage(
-                                      imageUrl: widget.thumbnailUrl!,
-                                      fit: BoxFit.contain,
-                                      memCacheWidth: 200,
-                                      fadeInDuration: Duration.zero,
-                                      errorWidget: (ctx, err, stack) =>
-                                          _buildLoadingPlaceholder(),
-                                    )
-                                  : _buildLoadingPlaceholder(),
-                          errorWidget: (ctx, e, _) =>
-                              _buildNoArtPlaceholder(ctx),
-                        )
-                  : _buildNoArtPlaceholder(context),
+                  child: widget.imageUrl.isNotEmpty
+                      ? isLocalFilePath(widget.imageUrl)
+                          ? Image.file(
+                              File(widget.imageUrl),
+                              key: ValueKey(widget.imageUrl),
+                              fit: BoxFit.contain,
+                              cacheWidth: 1200,
+                              errorBuilder: (ctx, e, _) =>
+                                  _buildNoArtPlaceholder(ctx),
+                            )
+                          : CachedNetworkImage(
+                              key: ValueKey(widget.imageUrl),
+                              imageUrl: widget.imageUrl,
+                              fit: BoxFit.contain,
+                              memCacheWidth: 1200,
+                              maxWidthDiskCache: 1200,
+                              maxHeightDiskCache: 1200,
+                              useOldImageOnUrlChange: true,
+                              fadeInDuration: Duration.zero,
+                              fadeOutDuration: Duration.zero,
+                              placeholder: (ctx, url) =>
+                                  widget.thumbnailUrl != null &&
+                                          widget.thumbnailUrl!.isNotEmpty
+                                      ? CachedNetworkImage(
+                                          imageUrl: widget.thumbnailUrl!,
+                                          fit: BoxFit.contain,
+                                          memCacheWidth: 200,
+                                          fadeInDuration: Duration.zero,
+                                          errorWidget: (ctx, err, stack) =>
+                                              _buildLoadingPlaceholder(),
+                                        )
+                                      : _buildLoadingPlaceholder(),
+                              errorWidget: (ctx, e, _) =>
+                                  _buildNoArtPlaceholder(ctx),
+                            )
+                      : _buildNoArtPlaceholder(context),
+                ),
+              ),
             ),
           ),
-        ),
-      ),
         );
 
         if (isCustom && theme.animations.coverRotation) {
@@ -2375,6 +2377,12 @@ class _SongInfoState extends State<_SongInfo> {
                   },
                 ),
               ),
+              if (widget.song!.hasDolbyAtmos == true) ...[
+                const SizedBox(height: 6),
+                const DolbyAtmosBadge(
+                    fontSize: 10,
+                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2)),
+              ],
             ],
           ),
         ),
@@ -3063,9 +3071,8 @@ class _PlaybackControls extends StatelessWidget {
                 final size = isCustom
                     ? theme.controls.size
                     : ScreenHelper.playButtonContainerSize(context);
-                final bgColor = isCustom
-                    ? theme.controls.getColor()
-                    : Colors.white;
+                final bgColor =
+                    isCustom ? theme.controls.getColor() : Colors.white;
                 final iconColor = isCustom
                     ? theme.controls.getPlayButtonColor()
                     : Colors.black;

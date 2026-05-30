@@ -15,6 +15,7 @@ import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
 import 'album_artwork.dart';
 import 'animated_equalizer.dart';
+import 'dolby_atmos_badge.dart';
 import 'multi_artist_widget.dart';
 import '../screens/album_screen.dart';
 import '../screens/artist_screen.dart';
@@ -63,17 +64,15 @@ class SongTile extends StatelessWidget {
           title: Text(
             song.title,
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: isCurrentSong
-                  ? Theme.of(context).colorScheme.primary
-                  : null,
+              color:
+                  isCurrentSong ? Theme.of(context).colorScheme.primary : null,
               fontWeight: isCurrentSong ? FontWeight.w600 : FontWeight.normal,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          subtitle: showArtist || showAlbum
-              ? _buildSubtitleWidget(theme)
-              : null,
+          subtitle:
+              showArtist || showAlbum ? _buildSubtitleWidget(theme) : null,
           trailing: _buildTrailing(context),
           onTap: onTap ?? () => _playSong(context),
           onLongPress: onLongPress ?? () => _showOptions(context),
@@ -98,8 +97,8 @@ class SongTile extends StatelessWidget {
               : Text(
                   '${song.track ?? index ?? 1}',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.lightSecondaryText,
-                  ),
+                        color: AppTheme.lightSecondaryText,
+                      ),
                 ),
         ),
       );
@@ -197,6 +196,11 @@ class SongTile extends StatelessWidget {
                 context,
               ).colorScheme.primary.withValues(alpha: 0.7),
             ),
+          ),
+        if (song.hasDolbyAtmos == true)
+          const Padding(
+            padding: EdgeInsets.only(right: 6),
+            child: DolbyAtmosBadge(),
           ),
         if (showDuration)
           Text(
@@ -367,19 +371,24 @@ class _SongOptionsSheetState extends State<_SongOptionsSheet> {
                               icon: Icons.speaker_rounded,
                               title: AppLocalizations.of(
                                 context,
-                              )!.playOnJukebox,
+                              )!
+                                  .playOnJukebox,
                               onTap: () {
                                 Navigator.pop(context);
-                                jukebox.setQueue(subsonic, [
-                                  widget.song,
-                                ], startIndex: 0);
+                                jukebox.setQueue(
+                                    subsonic,
+                                    [
+                                      widget.song,
+                                    ],
+                                    startIndex: 0);
                               },
                             ),
                             _OptionTile(
                               icon: Icons.queue_rounded,
                               title: AppLocalizations.of(
                                 context,
-                              )!.addToJukeboxQueue,
+                              )!
+                                  .addToJukeboxQueue,
                               onTap: () {
                                 Navigator.pop(context);
                                 jukebox.addToQueue(subsonic, [widget.song]);
@@ -436,8 +445,7 @@ class _SongOptionsSheetState extends State<_SongOptionsSheet> {
   }
 
   Widget _buildDownloadTile(BuildContext context) {
-    final isOffline =
-        Provider.of<AuthProvider>(context, listen: false).state ==
+    final isOffline = Provider.of<AuthProvider>(context, listen: false).state ==
         AuthState.offlineMode;
 
     if (_isDownloading) {
@@ -454,7 +462,8 @@ class _SongOptionsSheetState extends State<_SongOptionsSheet> {
         title: Text(
           AppLocalizations.of(
             context,
-          )!.downloading((_downloadProgress * 100).toInt()),
+          )!
+              .downloading((_downloadProgress * 100).toInt()),
         ),
       );
     }
