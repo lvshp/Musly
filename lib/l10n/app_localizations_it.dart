@@ -113,6 +113,15 @@ class AppLocalizationsIt extends AppLocalizations {
   String get albums => 'Album';
 
   @override
+  String get sectionAlbums => 'Album';
+
+  @override
+  String get sectionEPs => 'EP';
+
+  @override
+  String get sectionSingles => 'Singoli';
+
+  @override
   String get artists => 'Artisti';
 
   @override

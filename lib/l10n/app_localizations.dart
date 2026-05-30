@@ -345,6 +345,24 @@ abstract class AppLocalizations {
   /// **'Albums'**
   String get albums;
 
+  /// Section header for full albums in artist screen
+  ///
+  /// In en, this message translates to:
+  /// **'Albums'**
+  String get sectionAlbums;
+
+  /// Section header for EPs (extended plays) in artist screen
+  ///
+  /// In en, this message translates to:
+  /// **'EPs'**
+  String get sectionEPs;
+
+  /// Section header for singles in artist screen
+  ///
+  /// In en, this message translates to:
+  /// **'Singles'**
+  String get sectionSingles;
+
   /// Artists section label
   ///
   /// In en, this message translates to:

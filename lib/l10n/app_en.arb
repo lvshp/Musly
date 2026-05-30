@@ -62,6 +62,21 @@
     "description": "Favorite playlists section title on home screen"
   },
 
+  "sectionAlbums": "Albums",
+  "@sectionAlbums": {
+    "description": "Section header for full albums in artist screen"
+  },
+
+  "sectionEPs": "EPs",
+  "@sectionEPs": {
+    "description": "Section header for EPs (extended plays) in artist screen"
+  },
+
+  "sectionSingles": "Singles",
+  "@sectionSingles": {
+    "description": "Section header for singles in artist screen"
+  },
+
   "madeForYou": "Made For You",
   "@madeForYou": {
     "description": "Made for you section title"
