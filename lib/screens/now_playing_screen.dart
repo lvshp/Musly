@@ -135,6 +135,18 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
 
   void _onHorizontalDragStart(DragStartDetails details) {
     if (_showLyrics || _isSwipeAnimating) return;
+
+    if (!kIsWeb && Platform.isAndroid) {
+      final mediaQuery = MediaQuery.of(context);
+      final sysInsets = mediaQuery.systemGestureInsets;
+      final screenWidth = mediaQuery.size.width;
+      const kEdgeBuffer = 8.0;
+      final dx = details.globalPosition.dx;
+      final inLeftZone = dx < sysInsets.left + kEdgeBuffer;
+      final inRightZone = dx > screenWidth - sysInsets.right - kEdgeBuffer;
+      if (inLeftZone || inRightZone) return;
+    }
+
     _isHorizontalDragging = true;
     _hasTriggeredHaptic = false;
   }
