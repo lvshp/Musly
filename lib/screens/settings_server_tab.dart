@@ -186,9 +186,8 @@ class _SettingsServerTabState extends State<SettingsServerTab> {
       trailing: Icon(
         CupertinoIcons.chevron_right,
         size: 16,
-        color: _isDark
-            ? AppTheme.darkSecondaryText
-            : AppTheme.lightSecondaryText,
+        color:
+            _isDark ? AppTheme.darkSecondaryText : AppTheme.lightSecondaryText,
       ),
       onTap: _showMusicFoldersDialog,
     );
@@ -317,7 +316,8 @@ class _SettingsServerTabState extends State<SettingsServerTab> {
         style: const TextStyle(fontSize: 16, color: Color(0xFFFF3B30)),
       ),
       onTap: () {
-        final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
+        final playerProvider =
+            Provider.of<PlayerProvider>(context, listen: false);
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         showDialog(
           context: context,
@@ -349,7 +349,8 @@ class _SettingsServerTabState extends State<SettingsServerTab> {
 
   Widget _buildSavedProfilesSection() {
     return FutureBuilder<List<ServerConfig>>(
-      future: Provider.of<AuthProvider>(context, listen: false).getSavedProfiles(),
+      future:
+          Provider.of<AuthProvider>(context, listen: false).getSavedProfiles(),
       builder: (context, snapshot) {
         final profiles = snapshot.data ?? [];
         if (profiles.isEmpty) return const SizedBox.shrink();
@@ -375,7 +376,7 @@ class _SettingsServerTabState extends State<SettingsServerTab> {
                 ),
               ),
             ),
-              Container(
+            Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
                 color: _isDark ? AppTheme.darkSurface : Colors.white,
@@ -386,14 +387,16 @@ class _SettingsServerTabState extends State<SettingsServerTab> {
                 child: Column(
                   children: [
                     ...profiles.map((profile) {
-                      final isActive = currentConfig?.serverUrl == profile.serverUrl &&
-                          currentConfig?.username == profile.username;
+                      final isActive =
+                          currentConfig?.serverUrl == profile.serverUrl &&
+                              currentConfig?.username == profile.username;
                       final label = profile.name?.isNotEmpty == true
                           ? profile.name!
                           : '${profile.username}@${Uri.tryParse(profile.serverUrl)?.host ?? profile.serverUrl}';
 
                       return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 16),
                         leading: Icon(
                           isActive
                               ? CupertinoIcons.checkmark_circle_fill
@@ -407,7 +410,8 @@ class _SettingsServerTabState extends State<SettingsServerTab> {
                         title: Text(
                           label,
                           style: TextStyle(
-                            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                            fontWeight:
+                                isActive ? FontWeight.w600 : FontWeight.normal,
                             color: isActive
                                 ? Theme.of(context).colorScheme.primary
                                 : null,
@@ -435,32 +439,41 @@ class _SettingsServerTabState extends State<SettingsServerTab> {
                                   context: context,
                                   builder: (ctx) => AlertDialog(
                                     title: Text(l10n.switchProfile),
-                                    content: Text(l10n.switchProfileConfirmation(label)),
+                                    content: Text(
+                                        l10n.switchProfileConfirmation(label)),
                                     actions: [
                                       TextButton(
-                                        onPressed: () => Navigator.pop(ctx, false),
+                                        onPressed: () =>
+                                            Navigator.pop(ctx, false),
                                         child: Text(l10n.cancel),
                                       ),
                                       TextButton(
-                                        onPressed: () => Navigator.pop(ctx, true),
+                                        onPressed: () =>
+                                            Navigator.pop(ctx, true),
                                         child: Text(l10n.ok),
                                       ),
                                     ],
                                   ),
                                 );
                                 if (confirmed == true) {
-                                  if (!mounted) return;
+                                  if (!context.mounted) return;
                                   final playerProvider =
-                                      Provider.of<PlayerProvider>(context, listen: false);
+                                      Provider.of<PlayerProvider>(context,
+                                          listen: false);
                                   await playerProvider.stop();
                                   await authProvider.switchProfile(profile);
                                 }
                               },
                       );
                     }),
-                    Divider(height: 1, color: _isDark ? AppTheme.darkDivider : AppTheme.lightDivider),
+                    Divider(
+                        height: 1,
+                        color: _isDark
+                            ? AppTheme.darkDivider
+                            : AppTheme.lightDivider),
                     ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 16),
                       leading: Icon(
                         CupertinoIcons.plus_circle,
                         color: Theme.of(context).colorScheme.primary,
@@ -472,11 +485,12 @@ class _SettingsServerTabState extends State<SettingsServerTab> {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      onTap: () {
+                      onTap: () async {
                         // Navigate to login screen to add new profile
-                        final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
-                        playerProvider.stop();
-                        authProvider.disconnect();
+                        final playerProvider =
+                            Provider.of<PlayerProvider>(context, listen: false);
+                        await playerProvider.stop();
+                        await authProvider.beginAddProfile();
                       },
                     ),
                   ],
@@ -516,25 +530,23 @@ class _MusicFoldersDialogState extends State<_MusicFoldersDialog> {
   }
 
   bool _isFolderEnabled(MusicFolder folder) {
-    
     return _selected.isEmpty || _selected.contains(folder.id);
   }
 
   void _toggle(MusicFolder folder) {
     setState(() {
       if (_selected.isEmpty) {
-        
         _selected = widget.folders
             .map((f) => f.id)
             .where((id) => id != folder.id)
             .toSet();
       } else if (_selected.contains(folder.id)) {
         _selected.remove(folder.id);
-        
+
         if (_selected.isEmpty) _selected = {};
       } else {
         _selected.add(folder.id);
-        
+
         if (_selected.length == widget.folders.length) _selected = {};
       }
     });

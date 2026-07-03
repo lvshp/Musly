@@ -272,7 +272,6 @@ class LibraryProvider extends ChangeNotifier {
       }
 
       _isInitialized = true;
-      _preloadCoverArt();
       _scheduleBackgroundRefresh();
     } catch (e) {
       _error = e.toString();
@@ -529,25 +528,6 @@ class LibraryProvider extends ChangeNotifier {
     if (_playlists.isNotEmpty) {
       _androidAutoService.updatePlaylists(_playlists, getCoverArtUrl);
     }
-  }
-
-  void _preloadCoverArt() {
-    Future.microtask(() async {
-      final allAlbums = [..._recentAlbums, ..._randomAlbums];
-      for (final album in allAlbums.take(20)) {
-        if (album.coverArt != null) {
-          try {
-            final url = _subsonicService.getCoverArtUrl(
-              album.coverArt,
-              size: 300,
-            );
-            if (url.isNotEmpty) {
-              _subsonicService.getCoverArtUrl(album.coverArt, size: 300);
-            }
-          } catch (_) {}
-        }
-      }
-    });
   }
 
   Future<void> refresh() async {

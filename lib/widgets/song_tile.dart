@@ -835,7 +835,12 @@ class _SongOptionsSheetState extends State<_SongOptionsSheet> {
                 (playlist) => ListTile(
                   leading: const Icon(Icons.queue_music_rounded),
                   title: Text(playlist.name),
-                  subtitle: Text('${playlist.songCount ?? 0} songs'),
+                  subtitle: Text(
+                    AppLocalizations.of(
+                      context,
+                    )!
+                        .songsCount(playlist.songCount ?? 0),
+                  ),
                   onTap: () async {
                     Navigator.pop(context);
 

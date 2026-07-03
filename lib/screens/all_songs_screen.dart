@@ -6,6 +6,7 @@ import '../providers/player_provider.dart';
 import '../models/models.dart';
 import '../widgets/widgets.dart';
 import '../theme/app_theme.dart';
+import '../l10n/app_localizations.dart';
 
 enum SongSortOption {
   titleAsc,
@@ -141,7 +142,7 @@ class _AllSongsScreenState extends State<AllSongsScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Sort By',
+              AppLocalizations.of(context)!.sortBy,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -149,14 +150,38 @@ class _AllSongsScreenState extends State<AllSongsScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            _buildSortOption('Title (A-Z)', SongSortOption.titleAsc, isDark),
-            _buildSortOption('Title (Z-A)', SongSortOption.titleDesc, isDark),
-            _buildSortOption('Artist (A-Z)', SongSortOption.artistAsc, isDark),
-            _buildSortOption('Artist (Z-A)', SongSortOption.artistDesc, isDark),
-            _buildSortOption('Album (A-Z)', SongSortOption.albumAsc, isDark),
-            _buildSortOption('Album (Z-A)', SongSortOption.albumDesc, isDark),
             _buildSortOption(
-              'Recently Added',
+              AppLocalizations.of(context)!.sortByTitleAZ,
+              SongSortOption.titleAsc,
+              isDark,
+            ),
+            _buildSortOption(
+              AppLocalizations.of(context)!.sortByTitleZA,
+              SongSortOption.titleDesc,
+              isDark,
+            ),
+            _buildSortOption(
+              AppLocalizations.of(context)!.sortByArtistAZ,
+              SongSortOption.artistAsc,
+              isDark,
+            ),
+            _buildSortOption(
+              AppLocalizations.of(context)!.sortByArtistZA,
+              SongSortOption.artistDesc,
+              isDark,
+            ),
+            _buildSortOption(
+              AppLocalizations.of(context)!.sortByAlbumAZ,
+              SongSortOption.albumAsc,
+              isDark,
+            ),
+            _buildSortOption(
+              AppLocalizations.of(context)!.sortByAlbumZA,
+              SongSortOption.albumDesc,
+              isDark,
+            ),
+            _buildSortOption(
+              AppLocalizations.of(context)!.recentlyAdded,
               SongSortOption.recentlyAdded,
               isDark,
             ),
@@ -204,39 +229,40 @@ class _AllSongsScreenState extends State<AllSongsScreen> {
     playerProvider.playSong(playlist.first, playlist: playlist, startIndex: 0);
   }
 
-  String _getSortLabel() {
+  String _getSortLabel(AppLocalizations l10n) {
     switch (_currentSort) {
       case SongSortOption.titleAsc:
-        return 'Title (A-Z)';
+        return l10n.sortByTitleAZ;
       case SongSortOption.titleDesc:
-        return 'Title (Z-A)';
+        return l10n.sortByTitleZA;
       case SongSortOption.artistAsc:
-        return 'Artist (A-Z)';
+        return l10n.sortByArtistAZ;
       case SongSortOption.artistDesc:
-        return 'Artist (Z-A)';
+        return l10n.sortByArtistZA;
       case SongSortOption.albumAsc:
-        return 'Album (A-Z)';
+        return l10n.sortByAlbumAZ;
       case SongSortOption.albumDesc:
-        return 'Album (Z-A)';
+        return l10n.sortByAlbumZA;
       case SongSortOption.recentlyAdded:
-        return 'Recently Added';
+        return l10n.recentlyAdded;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('All Songs'),
+        title: Text(l10n.allSongs),
         backgroundColor: isDark ? AppTheme.darkBackground : Colors.white,
         actions: [
           if (_sortedSongs.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.sort_rounded),
               onPressed: _showSortOptions,
-              tooltip: 'Sort',
+              tooltip: l10n.sortBy,
             ),
         ],
       ),
@@ -254,7 +280,7 @@ class _AllSongsScreenState extends State<AllSongsScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'No songs found',
+                        l10n.noSongsFound,
                         style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                       ),
                     ],
@@ -271,7 +297,7 @@ class _AllSongsScreenState extends State<AllSongsScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '${_sortedSongs.length} songs',
+                                  l10n.songsCount(_sortedSongs.length),
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
@@ -291,7 +317,7 @@ class _AllSongsScreenState extends State<AllSongsScreen> {
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        _getSortLabel(),
+                                        _getSortLabel(l10n),
                                         style: TextStyle(
                                           fontSize: 12,
                                           color: AppTheme.appleMusicRed,
@@ -312,7 +338,7 @@ class _AllSongsScreenState extends State<AllSongsScreen> {
                               color: isDark ? Colors.white70 : Colors.black54,
                               size: 28,
                             ),
-                            tooltip: 'Shuffle play',
+                            tooltip: l10n.shufflePlay,
                           ),
                           const SizedBox(width: 8),
                           Consumer<PlayerProvider>(

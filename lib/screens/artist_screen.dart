@@ -22,6 +22,7 @@ class _ArtistScreenState extends State<ArtistScreen> {
   List<Song> _topSongs = [];
   List<Album> _albums = [];
   bool _isLoading = true;
+  bool _isLoadingTopSongs = false;
 
   @override
   void initState() {
@@ -44,7 +45,10 @@ class _ArtistScreenState extends State<ArtistScreen> {
       if (libraryProvider.isLocalOnlyMode) {
         artist = libraryProvider.artists.firstWhere(
           (a) => a.id == widget.artistId,
-          orElse: () => Artist(id: widget.artistId, name: 'Unknown Artist'),
+          orElse: () => Artist(
+            id: widget.artistId,
+            name: AppLocalizations.of(context)!.unknownArtist,
+          ),
         );
         albums = await libraryProvider.getArtistAlbums(widget.artistId);
 
@@ -52,25 +56,12 @@ class _ArtistScreenState extends State<ArtistScreen> {
             .where((s) => s.artistId == widget.artistId)
             .toList();
       } else {
-        artist = await subsonicService.getArtist(widget.artistId);
-        topSongs = await subsonicService.getArtistTopSongs(widget.artistId);
-        albums = await subsonicService.getArtistAlbums(widget.artistId);
-        if (albums.isNotEmpty) {
-          final topSongIds = topSongs.map((s) => s.id).toSet();
-          final seenIds = {...topSongIds};
-          const chunkSize = 5;
-          final allAlbumSongs = <Song>[];
-          for (var i = 0; i < albums.length; i += chunkSize) {
-            final chunk =
-                albums.sublist(i, (i + chunkSize).clamp(0, albums.length));
-            final results = await Future.wait(
-                chunk.map((a) => subsonicService.getAlbumSongs(a.id)));
-            allAlbumSongs.addAll(results
-                .expand((songs) => songs)
-                .where((s) => seenIds.add(s.id)));
-          }
-          topSongs = [...topSongs, ...allAlbumSongs];
-        }
+        final results = await Future.wait<Object>([
+          subsonicService.getArtist(widget.artistId),
+          subsonicService.getArtistAlbums(widget.artistId),
+        ]);
+        artist = results[0] as Artist;
+        albums = results[1] as List<Album>;
       }
 
       if (mounted) {
@@ -81,11 +72,79 @@ class _ArtistScreenState extends State<ArtistScreen> {
           _isLoading = false;
         });
       }
+      if (mounted && !libraryProvider.isLocalOnlyMode) {
+        _loadTopSongs();
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _loadTopSongs() async {
+    if (!mounted) return;
+    if (_isLoadingTopSongs) return;
+    setState(() => _isLoadingTopSongs = true);
+
+    final libraryProvider = Provider.of<LibraryProvider>(
+      context,
+      listen: false,
+    );
+    final subsonicService = libraryProvider.subsonicService;
+
+    try {
+      var songs = await subsonicService.getArtistTopSongs(widget.artistId);
+      if (songs.isEmpty && _albums.isNotEmpty) {
+        songs = await _loadAlbumSongsPreview(limit: 50);
+      }
+      if (!mounted) return;
+      setState(() {
+        _topSongs = songs;
+        _isLoadingTopSongs = false;
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoadingTopSongs = false);
+      }
+    }
+  }
+
+  Future<List<Song>> _loadAlbumSongsPreview({required int limit}) async {
+    final libraryProvider = Provider.of<LibraryProvider>(
+      context,
+      listen: false,
+    );
+    final subsonicService = libraryProvider.subsonicService;
+    final songs = <Song>[];
+    final seenIds = <String>{};
+
+    for (final album in _albums) {
+      final albumSongs = await subsonicService.getAlbumSongs(album.id);
+      for (final song in albumSongs) {
+        if (seenIds.add(song.id)) {
+          songs.add(song);
+          if (songs.length >= limit) return songs;
+        }
+      }
+    }
+    return songs;
+  }
+
+  String? get _headerArtwork {
+    final artist = _artist;
+    if (artist?.artistImageUrl?.isNotEmpty == true) {
+      return artist!.artistImageUrl;
+    }
+    if (artist?.coverArt?.isNotEmpty == true) {
+      return artist!.coverArt;
+    }
+    for (final album in _albums) {
+      if (album.coverArt?.isNotEmpty == true) {
+        return album.coverArt;
+      }
+    }
+    return null;
   }
 
   Future<void> _addArtistToQueue() async {
@@ -119,22 +178,18 @@ class _ArtistScreenState extends State<ArtistScreen> {
 
       if (!mounted) return;
 
-      final addedToQueueMessage =
-          loc?.addedArtistToQueue ?? 'Added artist to Queue';
       messenger.showSnackBar(
         SnackBar(
-          content: Text(addedToQueueMessage),
+          content: Text(loc!.addedArtistToQueue),
           duration: const Duration(seconds: 2),
         ),
       );
     } catch (e) {
       if (!mounted) return;
 
-      final addedToQueueErrorMessage =
-          loc?.addedArtistToQueueError ?? 'Failed adding artist to Queue';
       messenger.showSnackBar(
         SnackBar(
-          content: Text(addedToQueueErrorMessage),
+          content: Text(loc!.addedArtistToQueueError),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -157,6 +212,7 @@ class _ArtistScreenState extends State<ArtistScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final headerArtwork = _headerArtwork;
 
     if (_isLoading) {
       return Scaffold(
@@ -182,7 +238,7 @@ class _ArtistScreenState extends State<ArtistScreen> {
             expandedHeight: 200,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(_artist!.name),
-              background: _artist!.coverArt != null
+              background: headerArtwork != null
                   ? ShaderMask(
                       shaderCallback: (rect) {
                         return LinearGradient(
@@ -195,8 +251,9 @@ class _ArtistScreenState extends State<ArtistScreen> {
                       },
                       blendMode: BlendMode.dstIn,
                       child: AlbumArtwork(
-                        coverArt: _artist!.coverArt,
+                        coverArt: headerArtwork,
                         size: 200,
+                        borderRadius: 0,
                       ),
                     )
                   : Container(
@@ -249,26 +306,32 @@ class _ArtistScreenState extends State<ArtistScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (_topSongs.isNotEmpty) ...[
+                  if (_isLoadingTopSongs || _topSongs.isNotEmpty) ...[
                     Text(
                       AppLocalizations.of(context)!.topSongs,
                       style: theme.textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 8),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _topSongs.take(5).length,
-                      itemBuilder: (context, index) {
-                        final song = _topSongs[index];
-                        return SongTile(
-                          song: song,
-                          playlist: _topSongs,
-                          index: index,
-                          showAlbum: true,
-                        );
-                      },
-                    ),
+                    if (_topSongs.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _topSongs.take(5).length,
+                        itemBuilder: (context, index) {
+                          final song = _topSongs[index];
+                          return SongTile(
+                            song: song,
+                            playlist: _topSongs,
+                            index: index,
+                            showAlbum: true,
+                          );
+                        },
+                      ),
                     const SizedBox(height: 24),
                   ],
                   Builder(

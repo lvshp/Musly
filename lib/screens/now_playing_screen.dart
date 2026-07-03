@@ -2452,7 +2452,7 @@ class _SongInfoState extends State<_SongInfo> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text('${AppLocalizations.of(context)!.error}: $e'),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -2756,7 +2756,7 @@ class _SongInfoState extends State<_SongInfo> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text('${AppLocalizations.of(context)!.error}: $e'),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -2799,7 +2799,7 @@ class _SongInfoState extends State<_SongInfo> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text('${AppLocalizations.of(context)!.error}: $e'),
             duration: const Duration(seconds: 2),
           ),
         );

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:dart_eval/dart_eval.dart';
-import 'package:dart_eval/stdlib/core.dart';
 import '../models/now_playing_theme.dart';
 
 /// A widget that executes custom Dart code from themes using dart_eval
@@ -58,15 +56,15 @@ class _CustomWidgetRunnerState extends State<CustomWidgetRunner> {
       // Attempt to compile and execute the custom Dart code
       // Note: dart_eval has significant limitations and may not support
       // complex Flutter widgets. This is a best-effort implementation.
-      
+
       // For now, we'll show a placeholder indicating custom widget execution
       // A full implementation would require more sophisticated dart_eval setup
       // with Flutter bridge bindings, which is beyond the scope of this basic impl.
-      
+
       setState(() {
         _compiledWidget = _buildPlaceholder(
           'Custom Widget: ${widget.customWidget.name}',
-          Colors.purple.withOpacity(0.1),
+          Colors.purple.withValues(alpha: 0.1),
         );
         _isCompiling = false;
       });
@@ -78,7 +76,6 @@ class _CustomWidgetRunnerState extends State<CustomWidgetRunner> {
       // });
       // final runtime = Runtime.ofProgram(program);
       // runtime.executeLib('package:main/main.dart', 'main');
-      
     } catch (e) {
       setState(() {
         _error = 'Custom widget error: ${e.toString()}';
@@ -94,14 +91,14 @@ class _CustomWidgetRunnerState extends State<CustomWidgetRunner> {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             Icons.code,
-            color: Colors.white.withOpacity(0.7),
+            color: Colors.white.withValues(alpha: 0.7),
             size: 20,
           ),
           const SizedBox(width: 8),
@@ -109,7 +106,7 @@ class _CustomWidgetRunnerState extends State<CustomWidgetRunner> {
             child: Text(
               text,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
               ),
@@ -126,9 +123,9 @@ class _CustomWidgetRunnerState extends State<CustomWidgetRunner> {
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.1),
+        color: Colors.red.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.red.withOpacity(0.3)),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -160,7 +157,7 @@ class _CustomWidgetRunnerState extends State<CustomWidgetRunner> {
     if (widget.safeMode) {
       return _buildPlaceholder(
         'Safe Mode: ${widget.customWidget.name} disabled',
-        Colors.orange.withOpacity(0.1),
+        Colors.orange.withValues(alpha: 0.1),
       );
     }
 
@@ -176,7 +173,7 @@ class _CustomWidgetRunnerState extends State<CustomWidgetRunner> {
               child: CircularProgressIndicator(
                 strokeWidth: 2,
                 valueColor: AlwaysStoppedAnimation(
-                  Colors.white.withOpacity(0.7),
+                  Colors.white.withValues(alpha: 0.7),
                 ),
               ),
             ),
@@ -184,7 +181,7 @@ class _CustomWidgetRunnerState extends State<CustomWidgetRunner> {
             Text(
               'Compiling...',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
                 fontSize: 12,
               ),
             ),

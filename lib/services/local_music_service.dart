@@ -310,6 +310,8 @@ class LocalMusicService extends ChangeNotifier {
       for (final dirPath in paths) {
         final dir = Directory(dirPath);
         if (await dir.exists()) {
+          _scanStatus = 'Scanning ${dir.path}...';
+          notifyListeners();
           await _collectAudioFiles(dir, audioFiles);
         }
       }
@@ -322,6 +324,11 @@ class LocalMusicService extends ChangeNotifier {
       _artists.clear();
 
       final totalFiles = audioFiles.length;
+      if (totalFiles == 0) {
+        _scanStatus = 'No music files found';
+        return;
+      }
+
       for (var i = 0; i < totalFiles; i++) {
         final file = audioFiles[i];
         try {
@@ -335,6 +342,9 @@ class LocalMusicService extends ChangeNotifier {
         if (i % 10 == 0) {
           _scanStatus = 'Processing: ${i + 1} / $totalFiles';
           notifyListeners();
+        }
+        if (i % 5 == 0) {
+          await Future<void>.delayed(Duration.zero);
         }
       }
 
@@ -375,11 +385,13 @@ class LocalMusicService extends ChangeNotifier {
   Future<void> _collectAudioFiles(Directory dir, List<File> files) async {
     try {
       final excluded = excludedFolders;
+      var visited = 0;
 
       await for (final entity in dir.list(
         recursive: true,
         followLinks: false,
       )) {
+        visited++;
         if (excluded.any((ex) => entity.path.startsWith(ex))) {
           continue;
         }
@@ -389,6 +401,12 @@ class LocalMusicService extends ChangeNotifier {
           if (_supportedExtensions.contains(ext)) {
             files.add(entity);
           }
+        }
+
+        if (visited % 100 == 0) {
+          _scanStatus = 'Scanning ${dir.path}: ${files.length} audio files';
+          notifyListeners();
+          await Future<void>.delayed(Duration.zero);
         }
       }
     } catch (e) {

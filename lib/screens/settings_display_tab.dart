@@ -10,6 +10,7 @@ import '../services/theme_service.dart';
 import '../services/locale_service.dart';
 import '../providers/player_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/settings_display_controls.dart';
 import '../l10n/app_localizations.dart';
 import 'theme_manager_screen.dart';
 
@@ -114,7 +115,9 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
         ),
         const SizedBox(height: 24),
         _buildSection(
-          title: 'NOW PLAYING THEMES',
+          title: AppLocalizations.of(context)!
+              .nowPlayingThemesSection
+              .toUpperCase(),
           children: [
             _buildNowPlayingThemesButton(),
           ],
@@ -130,14 +133,18 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
         _buildSection(
           title: AppLocalizations.of(
             context,
-          )!.artworkStyleSection.toUpperCase(),
+          )!
+              .artworkStyleSection
+              .toUpperCase(),
           children: [_buildArtworkStyleEditor()],
         ),
         const SizedBox(height: 24),
         _buildSection(
           title: AppLocalizations.of(
             context,
-          )!.smartRecommendations.toUpperCase(),
+          )!
+              .smartRecommendations
+              .toUpperCase(),
           children: [
             _buildRecommendationsToggle(),
             _buildDivider(),
@@ -160,12 +167,11 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          
           _buildEditorRow(
             icon: CupertinoIcons.moon_stars_fill,
             iconColor: const Color(0xFF5856D6),
             label: AppLocalizations.of(context)!.themeLabel,
-            child: _ThemeModeSelector(
+            child: ThemeModeSelector(
               value: _themeMode,
               isDark: isDark,
               onChanged: (mode) async {
@@ -174,14 +180,12 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
               },
             ),
           ),
-
           const SizedBox(height: 20),
-
           _buildEditorRow(
             icon: Icons.palette_rounded,
             iconColor: const Color(0xFFFF9500),
             label: AppLocalizations.of(context)!.accentColorLabel,
-            child: _AccentColorPicker(
+            child: AccentColorPicker(
               selected: _accentColor,
               onChanged: (color) async {
                 setState(() => _accentColor = color);
@@ -189,7 +193,6 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
               },
             ),
           ),
-
           ...[
             const SizedBox(height: 20),
             _buildEditorRow(
@@ -505,13 +508,13 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
           size: 18,
         ),
       ),
-      title: const Text(
-        'Customize Now Playing Screen (Beta)',
+      title: Text(
+        AppLocalizations.of(context)!.customizeNowPlayingTitle,
         style: TextStyle(fontSize: 16),
       ),
-      subtitle: const Text(
-        'Create and manage custom themes',
-        style: TextStyle(
+      subtitle: Text(
+        AppLocalizations.of(context)!.customizeNowPlayingSubtitle,
+        style: const TextStyle(
           fontSize: 13,
           color: Colors.grey,
         ),
@@ -607,7 +610,7 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
         blur = previewSize / 4;
         offset = Offset(0, previewSize / 12);
         break;
-      default: 
+      default:
         opacity = _isDark ? 0.22 : 0.14;
         blur = previewSize / 10;
         offset = Offset(0, previewSize / 30);
@@ -631,7 +634,6 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          
           Center(
             child: Column(
               children: [
@@ -675,9 +677,7 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
               ],
             ),
           ),
-
           const SizedBox(height: 28),
-
           _buildEditorRow(
             icon: Icons.crop_square_rounded,
             iconColor: const Color(0xFF5856D6),
@@ -695,7 +695,6 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
               },
             ),
           ),
-
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOutCubic,
@@ -719,14 +718,18 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
                         ),
                         child: SliderTheme(
                           data: SliderTheme.of(context).copyWith(
-                            activeTrackColor: Theme.of(context).colorScheme.primary,
+                            activeTrackColor:
+                                Theme.of(context).colorScheme.primary,
                             inactiveTrackColor: _isDark
                                 ? AppTheme.darkDivider
                                 : AppTheme.lightDivider,
                             thumbColor: Theme.of(context).colorScheme.primary,
-                            overlayColor: Theme.of(context).colorScheme.primary.withValues(
-                              alpha: 0.12,
-                            ),
+                            overlayColor: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withValues(
+                                  alpha: 0.12,
+                                ),
                             trackHeight: 3,
                             thumbShape: const RoundSliderThumbShape(
                               enabledThumbRadius: 7,
@@ -748,9 +751,7 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
                   )
                 : const SizedBox.shrink(),
           ),
-
           const SizedBox(height: 16),
-
           _buildEditorRow(
             icon: Icons.blur_on_rounded,
             iconColor: const Color(0xFF34AADC),
@@ -769,7 +770,6 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
               },
             ),
           ),
-
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOutCubic,
@@ -833,7 +833,8 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
             Flexible(
               child: Text(
                 label,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                style:
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -866,11 +867,13 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
               color: isSelected
                   ? Theme.of(context).colorScheme.primary
                   : (_isDark
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : Colors.black.withValues(alpha: 0.06)),
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.06)),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.transparent,
               ),
             ),
             child: Text(
@@ -1030,7 +1033,7 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: const Color(0xFF5865F2), 
+              color: const Color(0xFF5865F2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(
@@ -1057,7 +1060,7 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
             activeTrackColor: Theme.of(context).colorScheme.primary,
             onChanged: (value) async {
               await player.setDiscordRpcEnabled(value);
-              
+
               setState(() {});
             },
           ),
@@ -1093,7 +1096,8 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
               size: 18,
             ),
           ),
-          title: Text(l10n.discordStatusText, style: const TextStyle(fontSize: 16)),
+          title: Text(l10n.discordStatusText,
+              style: const TextStyle(fontSize: 16)),
           subtitle: Text(
             l10n.discordStatusTextSubtitle,
             style: TextStyle(
@@ -1225,7 +1229,6 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
         ),
         child: Column(
           children: [
-            
             Container(
               margin: const EdgeInsets.only(top: 8, bottom: 4),
               width: 40,
@@ -1235,7 +1238,6 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            
             Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -1258,12 +1260,12 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
               ),
             ),
             const Divider(height: 1),
-            
             ListTile(
               leading: const Icon(CupertinoIcons.device_phone_portrait),
               title: Text(AppLocalizations.of(context)!.systemDefault),
               trailing: localeService.currentLocale == null
-                  ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
+                  ? Icon(Icons.check,
+                      color: Theme.of(context).colorScheme.primary)
                   : null,
               onTap: () {
                 localeService.setLocale(null);
@@ -1271,7 +1273,6 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
               },
             ),
             const Divider(height: 1),
-            
             Expanded(
               child: ListView(
                 children: LocaleService.supportedLanguages.entries.map((entry) {
@@ -1284,7 +1285,8 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
                     ),
                     title: Text(entry.value),
                     trailing: isSelected
-                        ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
+                        ? Icon(Icons.check,
+                            color: Theme.of(context).colorScheme.primary)
                         : null,
                     onTap: () {
                       localeService.setLocale(Locale(entry.key));
@@ -1328,124 +1330,5 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
       'vi': '🇻🇳',
     };
     return flagMap[languageCode] ?? '🌐';
-  }
-}
-
-class _ThemeModeSelector extends StatelessWidget {
-  const _ThemeModeSelector({
-    required this.value,
-    required this.isDark,
-    required this.onChanged,
-  });
-
-  final ThemeMode value;
-  final bool isDark;
-  final ValueChanged<ThemeMode> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final options = [
-      (mode: ThemeMode.system, label: AppLocalizations.of(context)!.themeModeSystem, icon: CupertinoIcons.device_phone_portrait),
-      (mode: ThemeMode.light, label: AppLocalizations.of(context)!.themeModeLight, icon: CupertinoIcons.sun_max_fill),
-      (mode: ThemeMode.dark, label: AppLocalizations.of(context)!.themeModeDark, icon: CupertinoIcons.moon_fill),
-    ];
-
-    final accent = Theme.of(context).colorScheme.primary;
-
-    return Row(
-      children: options.map((opt) {
-        final selected = value == opt.mode;
-        return Expanded(
-          child: GestureDetector(
-            onTap: () => onChanged(opt.mode),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              margin: const EdgeInsets.only(right: 6),
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: selected
-                    ? accent
-                    : (isDark
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : Colors.black.withValues(alpha: 0.06)),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    opt.icon,
-                    size: 18,
-                    color: selected
-                        ? Colors.white
-                        : (isDark ? Colors.white70 : Colors.black54),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    opt.label,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                      color: selected
-                          ? Colors.white
-                          : (isDark ? Colors.white70 : Colors.black54),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-class _AccentColorPicker extends StatelessWidget {
-  const _AccentColorPicker({
-    required this.selected,
-    required this.onChanged,
-  });
-
-  final AccentColor selected;
-  final ValueChanged<AccentColor> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: AccentColor.values.map((color) {
-        final isSelected = selected == color;
-        return GestureDetector(
-          onTap: () => onChanged(color),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: color.color,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isSelected ? Colors.white : Colors.transparent,
-                width: 2.5,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: color.color.withValues(alpha: 0.6),
-                        blurRadius: 8,
-                        spreadRadius: 1,
-                      ),
-                    ]
-                  : null,
-            ),
-            child: isSelected
-                ? const Icon(Icons.check, color: Colors.white, size: 16)
-                : null,
-          ),
-        );
-      }).toList(),
-    );
   }
 }

@@ -48,7 +48,10 @@ class _AlbumScreenState extends State<AlbumScreen> {
       if (libraryProvider.isLocalOnlyMode) {
         album = libraryProvider.cachedAllAlbums.firstWhere(
           (a) => a.id == widget.albumId,
-          orElse: () => Album(id: widget.albumId, name: 'Unknown Album'),
+          orElse: () => Album(
+            id: widget.albumId,
+            name: AppLocalizations.of(context)!.unknownAlbum,
+          ),
         );
       } else {
         album = await subsonicService.getAlbum(widget.albumId);
@@ -101,7 +104,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Downloaded ${_songs.length} songs from ${_album!.name}',
+              AppLocalizations.of(context)!
+                  .downloadedSongsFrom(_songs.length, _album!.name),
             ),
             duration: const Duration(seconds: 3),
           ),
@@ -112,7 +116,10 @@ class _AlbumScreenState extends State<AlbumScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Downloading ${_songs.length} songs in background…'),
+          content: Text(
+            AppLocalizations.of(context)!
+                .downloadingSongsInBackground(_songs.length),
+          ),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -247,7 +254,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                 actions: [
                   if (!isOffline)
                     IconButton(
-                      tooltip: 'Download album',
+                      tooltip: AppLocalizations.of(context)!.downloadAlbum,
                       onPressed: _isDownloading ? null : _downloadAlbum,
                       icon: _isDownloading
                           ? const SizedBox(

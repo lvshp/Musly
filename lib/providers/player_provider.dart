@@ -65,6 +65,7 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
   RepeatMode _repeatMode = RepeatMode.off;
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
+  Duration _maxPositionForCurrentSong = Duration.zero;
   Song? _currentSong;
   double _volume = 1.0;
 
@@ -79,9 +80,11 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool _isPlayingRadio = false;
 
   bool _hasPlayedOnce = false;
+  bool _currentPlayScrobbled = false;
 
   SharedPreferences? _prefs;
   Timer? _persistDebounceTimer;
+  final bool _enablePersistentQueue;
   static const String _keyQueue = 'persistent_queue';
   static const String _keyQueueIndex = 'persistent_queue_index';
   static const String _keyQueueSongId = 'persistent_queue_song_id';
@@ -111,14 +114,15 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool _pitchCorrection = true;
 
   PlayerProvider(
-    this._subsonicService,
-    StorageService storageService,
-    this._castService,
-    this._upnpService,
-    this._audioHandler,
-    this._jukeboxService,
-    this._transcodingService,
-  ) {
+      this._subsonicService,
+      StorageService storageService,
+      this._castService,
+      this._upnpService,
+      this._audioHandler,
+      this._jukeboxService,
+      this._transcodingService,
+      {bool enablePersistentQueue = true})
+      : _enablePersistentQueue = enablePersistentQueue {
     _storageService = storageService;
     _discordRpcService = DiscordRpcService(storageService);
     _castService.addListener(_onCastStateChanged);
@@ -149,7 +153,9 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
       } catch (_) {}
     }
 
-    _restoreQueueState();
+    if (_enablePersistentQueue) {
+      _restoreQueueState();
+    }
 
     // Register app lifecycle observer to save state on iOS when app goes to background
     WidgetsBinding.instance.addObserver(this);
@@ -181,6 +187,7 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
   // ── Persistent Queue ───────────────────────────────────────────────────────
 
   void _saveQueueState() {
+    if (!_enablePersistentQueue) return;
     _persistDebounceTimer?.cancel();
     _persistDebounceTimer = Timer(const Duration(milliseconds: 200), () async {
       await _saveQueueStateImmediate();
@@ -188,6 +195,7 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> _saveQueueStateImmediate() async {
+    if (!_enablePersistentQueue) return;
     try {
       _prefs ??= await SharedPreferences.getInstance();
       if (_prefs == null) return;
@@ -204,6 +212,7 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> _restoreQueueState() async {
+    if (!_enablePersistentQueue) return;
     try {
       _prefs ??= await SharedPreferences.getInstance();
       if (_prefs == null) return;
@@ -1189,6 +1198,7 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
                     pos.inMilliseconds != _lastPolledPosition!.inMilliseconds) {
                   _lastPolledPosition = pos;
                   _position = pos;
+                  _trackMaxPosition(pos);
                   _positionController.add(pos);
                   notifyListeners();
                   _updateAllServices();
@@ -1236,6 +1246,7 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
             position.inMilliseconds < _position.inMilliseconds - 1000;
 
         _position = position;
+        _trackMaxPosition(position);
         _positionController.add(position);
 
         if (positionJumpedBack ||
@@ -1345,11 +1356,7 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> _onSongComplete() async {
     if (_currentSong != null && _currentSong!.isLocal != true) {
-      _subsonicService.scrobble(_currentSong!.id, submission: true).catchError((
-        e,
-      ) {
-        _offlineService.queueScrobble(_currentSong!.id, submission: true);
-      });
+      _submitScrobble(_currentSong!, submission: true);
     }
 
     if (_currentSong != null && _recommendationService != null) {
@@ -1375,6 +1382,8 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
     // Fallback for single-song mode
     if (_repeatMode == RepeatMode.one ||
         (_repeatMode == RepeatMode.all && _queue.length == 1)) {
+      _currentPlayScrobbled = false;
+      _maxPositionForCurrentSong = Duration.zero;
       await seek(Duration.zero);
       await play();
     } else if (_currentIndex < _queue.length - 1 ||
@@ -1392,7 +1401,17 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       if (_currentIndex < _queue.length - 1) {
         await skipToIndex(_currentIndex + 1);
+        return;
       }
+    }
+
+    if (_repeatMode == RepeatMode.one && _currentSong != null) {
+      _currentPlayScrobbled = false;
+      _maxPositionForCurrentSong = Duration.zero;
+      await seek(Duration.zero);
+      await play();
+    } else if (_repeatMode == RepeatMode.all || _shuffleEnabled) {
+      await skipNext();
     }
   }
 
@@ -1451,6 +1470,8 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
       }
 
       _currentSong = song;
+      _currentPlayScrobbled = false;
+      _maxPositionForCurrentSong = Duration.zero;
       _resolvedArtworkUrl = null;
       _position = Duration.zero;
       notifyListeners();
@@ -1634,13 +1655,8 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
       }
 
       if (song.isLocal != true) {
-        if (_offlineService.isOfflineMode) {
-          _offlineService.queueScrobble(song.id, submission: false);
-        } else {
-          _subsonicService.scrobble(song.id, submission: false).catchError((e) {
-            _offlineService.queueScrobble(song.id, submission: false);
-          });
-
+        _submitNowPlaying(song);
+        if (!_offlineService.isOfflineMode) {
           _offlineService
               .flushPendingScrobbles(_subsonicService)
               .catchError((e) {
@@ -2028,6 +2044,7 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> skipNext() async {
+    final previousSong = _currentSong;
     if (_currentSong != null && _recommendationService != null) {
       final played = _position.inSeconds;
       final total = _duration.inSeconds;
@@ -2052,6 +2069,7 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
 
     if (_concatenatingSource != null) {
+      int? targetIndex;
       if (_shuffleEnabled && _queue.length > 1) {
         _shuffleHistory.add(_currentSong!.id);
         if (_shuffleHistory.length > 50) _shuffleHistory.removeAt(0);
@@ -2059,11 +2077,22 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
         do {
           next = Random().nextInt(_queue.length);
         } while (next == _currentIndex);
-        await _audioPlayer.seek(Duration.zero, index: next);
+        targetIndex = next;
+        await _audioPlayer.seek(Duration.zero, index: targetIndex);
       } else if (_currentIndex < _queue.length - 1) {
-        await _audioPlayer.seek(Duration.zero, index: _currentIndex + 1);
+        targetIndex = _currentIndex + 1;
+        await _audioPlayer.seek(Duration.zero, index: targetIndex);
       } else if (_repeatMode == RepeatMode.all) {
-        await _audioPlayer.seek(Duration.zero, index: 0);
+        targetIndex = 0;
+        await _audioPlayer.seek(Duration.zero, index: targetIndex);
+      }
+      if (!_audioPlayer.playing) {
+        await _audioPlayer.play();
+      }
+      if (targetIndex == _currentIndex) {
+        _submitScrobbleIfPlayedEnough(previousSong);
+        _currentPlayScrobbled = false;
+        _maxPositionForCurrentSong = Duration.zero;
       }
       return;
     }
@@ -2080,6 +2109,8 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
       await skipToIndex(_currentIndex + 1);
     } else if (_repeatMode == RepeatMode.all) {
       if (_queue.length == 1) {
+        _currentPlayScrobbled = false;
+        _maxPositionForCurrentSong = Duration.zero;
         await seek(Duration.zero);
         await play();
       } else {
@@ -2495,19 +2526,13 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
     // Track completion of the previous song
     if (_currentSong != null) {
       if (_currentSong!.isLocal != true) {
-        _subsonicService
-            .scrobble(_currentSong!.id, submission: true)
-            .catchError(
-          (e) {
-            _offlineService.queueScrobble(_currentSong!.id, submission: true);
-          },
-        );
+        _submitScrobbleIfPlayedEnough(_currentSong);
       }
       if (_recommendationService != null) {
         _recommendationService!.trackSongPlay(
           _currentSong!,
           durationPlayed: _duration.inSeconds,
-          completed: true,
+          completed: _hasPlayedEnoughForSubmission(),
         );
       }
     }
@@ -2519,6 +2544,8 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     _currentIndex = newIndex;
     _currentSong = _queue[_currentIndex];
+    _currentPlayScrobbled = false;
+    _maxPositionForCurrentSong = Duration.zero;
     _position = Duration.zero;
     _resolvedArtworkUrl = null;
     notifyListeners();
@@ -2533,10 +2560,52 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
         artworkUrl: _resolvedArtworkUrl ?? _currentSong!.coverArt,
       );
       await _applyReplayGain(_currentSong);
+      _submitNowPlaying(_currentSong!);
     }
 
     _updateAllServices();
     _updateAndroidAuto();
+  }
+
+  bool _hasPlayedEnoughForSubmission() {
+    final played = _maxPositionForCurrentSong.inSeconds;
+    final total = _duration.inSeconds;
+    if (played <= 0) return false;
+    if (total <= 0) return played >= 240;
+    return played >= (total * 0.5).round();
+  }
+
+  void _trackMaxPosition(Duration position) {
+    if (position > _maxPositionForCurrentSong) {
+      _maxPositionForCurrentSong = position;
+    }
+  }
+
+  void _submitScrobbleIfPlayedEnough(Song? song) {
+    if (song == null || song.isLocal == true) return;
+    if (!_hasPlayedEnoughForSubmission()) return;
+    _submitScrobble(song, submission: true);
+  }
+
+  void _submitScrobble(Song song, {required bool submission}) {
+    if (submission) {
+      if (_currentPlayScrobbled) return;
+      _currentPlayScrobbled = true;
+    }
+    _subsonicService.scrobble(song.id, submission: submission).catchError((e) {
+      _offlineService.queueScrobble(song.id, submission: submission);
+    });
+  }
+
+  void _submitNowPlaying(Song song) {
+    if (song.isLocal == true) return;
+    if (_offlineService.isOfflineMode) {
+      _offlineService.queueScrobble(song.id, submission: false);
+      return;
+    }
+    _subsonicService.scrobble(song.id, submission: false).catchError((e) {
+      _offlineService.queueScrobble(song.id, submission: false);
+    });
   }
 
   Future<void> _applyReplayGain(Song? song) async {
@@ -2655,7 +2724,9 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
     _sleepTimerFadeTimer?.cancel();
     _sleepTimerFadePeriodicTimer?.cancel();
     // Save queue state immediately before cancelling the debounce timer
-    _saveQueueStateImmediate();
+    if (_enablePersistentQueue) {
+      _saveQueueStateImmediate();
+    }
     _persistDebounceTimer?.cancel();
     _jukeboxPollTimer?.cancel();
     _jukeboxService.removeListener(_onJukeboxEnabledChanged);

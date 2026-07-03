@@ -126,6 +126,16 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> beginAddProfile() async {
+    if (_config != null) {
+      await _storageService.saveProfile(_config!);
+      await _storageService.saveServerConfig(_config!);
+    }
+    _error = null;
+    _state = AuthState.unauthenticated;
+    notifyListeners();
+  }
+
   Future<bool> login({
     required String serverUrl,
     required String username,

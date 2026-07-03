@@ -598,7 +598,7 @@ class _QuickAccessTileState extends State<_QuickAccessTile> {
           boxShadow: _isHovered
               ? [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -827,6 +827,7 @@ class _DesktopSongTableHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
     final labelStyle = TextStyle(
       fontSize: 11,
       fontWeight: FontWeight.w600,
@@ -844,12 +845,15 @@ class _DesktopSongTableHeader extends StatelessWidget {
           const SizedBox(width: 12),
           const SizedBox(width: 40),
           const SizedBox(width: 12),
-          Expanded(flex: 5, child: Text('TITLE', style: labelStyle)),
-          Expanded(flex: 3, child: Text('ALBUM', style: labelStyle)),
+          Expanded(
+              flex: 5, child: Text(l10n.allSongsTableTitle, style: labelStyle)),
+          Expanded(
+              flex: 3, child: Text(l10n.allSongsTableAlbum, style: labelStyle)),
           const SizedBox(width: 40),
           SizedBox(
             width: 52,
-            child: Text('TIME', style: labelStyle, textAlign: TextAlign.right),
+            child: Text(l10n.allSongsTableTime,
+                style: labelStyle, textAlign: TextAlign.right),
           ),
           const SizedBox(width: 8),
         ],

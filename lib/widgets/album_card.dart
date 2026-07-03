@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/album.dart';
+import '../services/fanart_service.dart';
 import '../theme/app_theme.dart';
 import 'album_artwork.dart';
 import 'multi_artist_widget.dart';
@@ -24,6 +25,35 @@ class AlbumCard extends StatefulWidget {
 
 class _AlbumCardState extends State<AlbumCard> {
   bool _isHovered = false;
+  String? _fanartCoverUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFanartCover();
+  }
+
+  @override
+  void didUpdateWidget(covariant AlbumCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.album.id != widget.album.id ||
+        oldWidget.album.coverArt != widget.album.coverArt) {
+      _fanartCoverUrl = null;
+      _loadFanartCover();
+    }
+  }
+
+  Future<void> _loadFanartCover() async {
+    if (widget.album.coverArt != null && widget.album.coverArt!.isNotEmpty) {
+      return;
+    }
+    final url = await FanartService().getAlbumCoverUrl(
+      albumTitle: widget.album.name,
+      artistName: widget.album.artist,
+    );
+    if (!mounted || url == null || url.isEmpty) return;
+    setState(() => _fanartCoverUrl = url);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +81,7 @@ class _AlbumCardState extends State<AlbumCard> {
                     boxShadow: _isHovered
                         ? [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
+                              color: Colors.black.withValues(alpha: 0.3),
                               blurRadius: 16,
                               offset: const Offset(0, 8),
                             ),
@@ -61,7 +91,7 @@ class _AlbumCardState extends State<AlbumCard> {
                   child: Stack(
                     children: [
                       AlbumArtwork(
-                        coverArt: widget.album.coverArt,
+                        coverArt: widget.album.coverArt ?? _fanartCoverUrl,
                         size: widget.size,
                         borderRadius: 8,
                       ),
@@ -132,7 +162,7 @@ class _PlayButton extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),

@@ -1845,4 +1845,367 @@ class AppLocalizationsFi extends AppLocalizations {
   String themeAuthor(String author) {
     return 'by $author';
   }
+
+  @override
+  String get lyricsSettingsSection => 'Lyrics';
+
+  @override
+  String get artworkSettingsSection => 'Artwork';
+
+  @override
+  String get fanartArtworkTitle => 'Fetch artwork from fanart.tv';
+
+  @override
+  String get fanartArtworkSubtitle =>
+      'When the server has no album or artist image, identify metadata with MusicBrainz and fetch artwork from fanart.tv.';
+
+  @override
+  String get fanartApiKeyTitle => 'Personal API key (BYOK)';
+
+  @override
+  String get fanartApiKeySubtitle =>
+      'Optional. Enter your fanart.tv personal API key. It is stored locally and sent only to fanart.tv.';
+
+  @override
+  String get fanartApiKeyHint => 'fanart.tv API key';
+
+  @override
+  String get fanartApiKeySaved =>
+      'Saved. Artwork lookup will use this key when enabled.';
+
+  @override
+  String get gaplessPlaybackTitle => 'Gapless Playback';
+
+  @override
+  String get gaplessPlaybackSubtitle => 'Eliminate silence between songs';
+
+  @override
+  String get nowPlayingThemesSection => 'Now Playing Themes';
+
+  @override
+  String get customizeNowPlayingTitle => 'Customize Now Playing Screen (Beta)';
+
+  @override
+  String get customizeNowPlayingSubtitle => 'Create and manage custom themes';
+
+  @override
+  String get analyticsPrivacySection => 'Analytics & Privacy';
+
+  @override
+  String anonymousId(String id) {
+    return 'Anonymous ID: $id';
+  }
+
+  @override
+  String get loadingEllipsis => 'Loading...';
+
+  @override
+  String get enableAnalyticsForDeviceId =>
+      'Enable analytics to see your anonymous device ID';
+
+  @override
+  String get copyDeviceId => 'Copy device ID';
+
+  @override
+  String get deviceIdCopied => 'Device ID copied to clipboard';
+
+  @override
+  String get thanksForRating => 'Thanks for Rating!';
+
+  @override
+  String get rateMusly => 'Rate Musly';
+
+  @override
+  String get alreadyRatedApp => 'You\'ve already rated the app';
+
+  @override
+  String get shareYourFeedback => 'Share your feedback';
+
+  @override
+  String get supportMusly => 'Support Musly';
+
+  @override
+  String get joinDiscordOrDonate => 'Join Discord or donate';
+
+  @override
+  String get rateExperienceQuestion => 'How would you rate your experience?';
+
+  @override
+  String get optionalFeedbackHint => 'Optional feedback...';
+
+  @override
+  String get submit => 'Submit';
+
+  @override
+  String get thanksForFeedback => 'Thank you for your feedback!';
+
+  @override
+  String addedFolder(String path) {
+    return 'Added folder: $path';
+  }
+
+  @override
+  String get removeFolder => 'Remove Folder';
+
+  @override
+  String removeFolderQuestion(String path) {
+    return 'Remove \"$path\" from scan paths?';
+  }
+
+  @override
+  String get folderRemoved => 'Folder removed';
+
+  @override
+  String get loadingLibrary => 'Loading library...';
+
+  @override
+  String get libraryEmptyOrFailed =>
+      'Library appears to be empty or failed to load. Make sure your server supports full library scanning.';
+
+  @override
+  String get songRemovedFromPlaylist => 'Song removed from playlist';
+
+  @override
+  String errorRemovingSong(Object error) {
+    return 'Error removing song: $error';
+  }
+
+  @override
+  String errorReorderingSong(Object error) {
+    return 'Error reordering song: $error';
+  }
+
+  @override
+  String get removeSongsTitle => 'Remove songs';
+
+  @override
+  String removeSongsQuestion(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'songs',
+      one: 'song',
+    );
+    return 'Remove $count $_temp0 from this playlist?';
+  }
+
+  @override
+  String songsRemovedFromPlaylist(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'songs',
+      one: 'song',
+    );
+    return '$count $_temp0 removed from playlist';
+  }
+
+  @override
+  String errorRemovingSongs(Object error) {
+    return 'Error removing songs: $error';
+  }
+
+  @override
+  String downloadedSongsFrom(int count, String name) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'songs',
+      one: 'song',
+    );
+    return 'Downloaded $count $_temp0 from $name';
+  }
+
+  @override
+  String downloadingSongsInBackground(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'songs',
+      one: 'song',
+    );
+    return 'Downloading $count $_temp0 in background…';
+  }
+
+  @override
+  String get reorderSongs => 'Reorder Songs';
+
+  @override
+  String get doneReordering => 'Done reordering';
+
+  @override
+  String get selectAll => 'Select all';
+
+  @override
+  String get deselectAll => 'Deselect all';
+
+  @override
+  String get removeSelected => 'Remove selected';
+
+  @override
+  String get selectSongs => 'Select songs';
+
+  @override
+  String get downloadPlaylist => 'Download playlist';
+
+  @override
+  String get downloadAlbum => 'Download album';
+
+  @override
+  String removeSongFromPlaylistQuestion(String title) {
+    return 'Remove \"$title\" from this playlist?';
+  }
+
+  @override
+  String get allSongsTableTitle => 'TITLE';
+
+  @override
+  String get allSongsTableAlbum => 'ALBUM';
+
+  @override
+  String get allSongsTableTime => 'TIME';
+
+  @override
+  String get songsYouPlayAppearHere => 'Songs you play will appear here';
+
+  @override
+  String get shufflePlay => 'Shuffle play';
+
+  @override
+  String get youtubeMusicLoginHint =>
+      'YouTube Music streams music directly from YouTube. No account required — tap Connect to start.';
+
+  @override
+  String get profileNameOptional => 'Profile Name (optional)';
+
+  @override
+  String get profileNameExample => 'e.g. Home, Work, VPN';
+
+  @override
+  String get copyError => 'Copy error';
+
+  @override
+  String get errorCopiedToClipboard => 'Error copied to clipboard';
+
+  @override
+  String get streamUrlCopied => 'Stream URL copied';
+
+  @override
+  String get searchInLibrary => 'Search in Library...';
+
+  @override
+  String get searchYourLibrary => 'Search your library';
+
+  @override
+  String get noPlaylistsFound => 'No playlists found';
+
+  @override
+  String get newTheme => 'New Theme';
+
+  @override
+  String get themeDeactivatedDefault => 'Theme deactivated (using default)';
+
+  @override
+  String get defaultThemeActivated => 'Default theme activated';
+
+  @override
+  String themeActivated(String name) {
+    return '$name activated';
+  }
+
+  @override
+  String duplicatedAs(String name) {
+    return 'Duplicated as \"$name\"';
+  }
+
+  @override
+  String get exportTheme => 'Export Theme';
+
+  @override
+  String exportedTo(String path) {
+    return 'Exported to $path';
+  }
+
+  @override
+  String exportFailed(Object error) {
+    return 'Export failed: $error';
+  }
+
+  @override
+  String get themeImported => 'Theme imported';
+
+  @override
+  String get themeImportedSafeMode => 'Theme imported (Safe Mode)';
+
+  @override
+  String get themeImportedSuccessfully => 'Theme imported successfully';
+
+  @override
+  String importFailed(Object error) {
+    return 'Import failed: $error';
+  }
+
+  @override
+  String get importFailedTitle => 'Import Failed';
+
+  @override
+  String get themeFileContainsErrors => 'The theme file contains errors:';
+
+  @override
+  String get securityWarning => 'Security Warning';
+
+  @override
+  String get themeCustomCodeWarning =>
+      'This theme contains custom Flutter code which may pose security risks.';
+
+  @override
+  String get themeDetails => 'Theme Details:';
+
+  @override
+  String get customWidgets => 'Custom Widgets:';
+
+  @override
+  String get dependencies => 'Dependencies:';
+
+  @override
+  String get author => 'Author';
+
+  @override
+  String get name => 'Name';
+
+  @override
+  String get enableCode => 'Enable Code';
+
+  @override
+  String get deleteTheme => 'Delete Theme';
+
+  @override
+  String deleteThemeQuestion(String name) {
+    return 'Are you sure you want to delete \"$name\"?';
+  }
+
+  @override
+  String themeDeleted(String name) {
+    return '$name deleted';
+  }
+
+  @override
+  String safeModeChanged(String state) {
+    return 'Safe Mode $state';
+  }
+
+  @override
+  String get enabled => 'enabled';
+
+  @override
+  String get disabled => 'disabled';
+
+  @override
+  String get duplicateTheme => 'Duplicate Theme';
+
+  @override
+  String get newThemeName => 'New theme name';
+
+  @override
+  String get duplicate => 'Duplicate';
 }

@@ -5,6 +5,7 @@ import '../services/recommendation_service.dart';
 import '../providers/library_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/widgets.dart';
+import '../l10n/app_localizations.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -104,7 +105,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Listening History')),
+      appBar:
+          AppBar(title: Text(AppLocalizations.of(context)!.listeningHistory)),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _recentSongs.isEmpty
@@ -121,7 +123,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'No Listening History',
+                        AppLocalizations.of(context)!.noListeningHistory,
                         style: theme.textTheme.headlineMedium?.copyWith(
                           color: isDark
                               ? AppTheme.darkSecondaryText
@@ -130,7 +132,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Songs you play will appear here',
+                        AppLocalizations.of(context)!.songsYouPlayAppearHere,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: isDark
                               ? AppTheme.darkSecondaryText

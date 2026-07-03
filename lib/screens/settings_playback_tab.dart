@@ -8,6 +8,7 @@ import '../services/auto_dj_service.dart';
 import '../services/transcoding_service.dart';
 import '../services/storage_service.dart';
 import '../services/fade_settings_service.dart';
+import '../services/fanart_service.dart';
 import '../theme/app_theme.dart';
 
 class SettingsPlaybackTab extends StatefulWidget {
@@ -26,6 +27,8 @@ class _SettingsPlaybackTabState extends State<SettingsPlaybackTab> {
   bool _replayGainPreventClipping = true;
   double _replayGainFallback = -6.0;
   bool _lrcLibFallback = false;
+  bool _fanartArtworkEnabled = false;
+  final TextEditingController _fanartApiKeyController = TextEditingController();
   AutoDjMode _autoDjMode = AutoDjMode.off;
   int _autoDjSongsToAdd = 5;
   bool _fadeEnabled = false;
@@ -46,17 +49,27 @@ class _SettingsPlaybackTabState extends State<SettingsPlaybackTab> {
 
     final storageService = StorageService();
     final lrcLibFallback = await storageService.getLrcLibFallback();
+    final fanartArtworkEnabled = await storageService.getFanartArtworkEnabled();
+    final fanartApiKey = await storageService.getFanartApiKey();
     setState(() {
       _replayGainMode = _replayGainService.getMode();
       _replayGainPreamp = _replayGainService.getPreampGain();
       _replayGainPreventClipping = _replayGainService.getPreventClipping();
       _replayGainFallback = _replayGainService.getFallbackGain();
       _lrcLibFallback = lrcLibFallback;
+      _fanartArtworkEnabled = fanartArtworkEnabled;
+      _fanartApiKeyController.text = fanartApiKey;
       _autoDjMode = playerProvider.autoDjService.mode;
       _autoDjSongsToAdd = playerProvider.autoDjService.songsToAdd;
       _fadeEnabled = _fadeSettingsService.getFadeEnabled();
       _fadeDurationMs = _fadeSettingsService.getFadeDurationMs();
     });
+  }
+
+  @override
+  void dispose() {
+    _fanartApiKeyController.dispose();
+    super.dispose();
   }
 
   @override
@@ -80,6 +93,8 @@ class _SettingsPlaybackTabState extends State<SettingsPlaybackTab> {
         _buildFadeSection(),
         const SizedBox(height: 24),
         _buildLrcLibSection(),
+        const SizedBox(height: 24),
+        _buildFanartSection(),
         const SizedBox(height: 24),
         _buildSection(
           title: AppLocalizations.of(context)!.sectionVolumeNormalization,
@@ -347,8 +362,9 @@ class _SettingsPlaybackTabState extends State<SettingsPlaybackTab> {
 
   Widget _buildLrcLibSection() {
     final accent = Theme.of(context).colorScheme.primary;
+    final l10n = AppLocalizations.of(context)!;
     return _buildSection(
-      title: 'Lyrics',
+      title: l10n.lyricsSettingsSection,
       children: [
         ListTile(
           contentPadding: const EdgeInsets.symmetric(
@@ -397,12 +413,116 @@ class _SettingsPlaybackTabState extends State<SettingsPlaybackTab> {
     );
   }
 
+  Widget _buildFanartSection() {
+    final accent = Theme.of(context).colorScheme.primary;
+    final l10n = AppLocalizations.of(context)!;
+    final secondaryTextColor = Theme.of(context).brightness == Brightness.dark
+        ? Colors.white.withValues(alpha: 0.5)
+        : Colors.black.withValues(alpha: 0.5);
+    return _buildSection(
+      title: l10n.artworkSettingsSection,
+      children: [
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 4,
+          ),
+          leading: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [accent, accent.withValues(alpha: 0.6)],
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              CupertinoIcons.photo_on_rectangle,
+              color: Colors.white,
+              size: 18,
+            ),
+          ),
+          title: Text(
+            l10n.fanartArtworkTitle,
+            style: TextStyle(fontSize: 16),
+          ),
+          subtitle: Text(
+            l10n.fanartArtworkSubtitle,
+            style: TextStyle(fontSize: 13, color: secondaryTextColor),
+          ),
+          trailing: CupertinoSwitch(
+            value: _fanartArtworkEnabled,
+            activeTrackColor: accent,
+            onChanged: (v) async {
+              final storage = StorageService();
+              await storage.saveFanartArtworkEnabled(v);
+              await FanartService().reloadSettings();
+              setState(() => _fanartArtworkEnabled = v);
+            },
+          ),
+        ),
+        if (_fanartArtworkEnabled) ...[
+          _buildDivider(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.fanartApiKeyTitle,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  l10n.fanartApiKeySubtitle,
+                  style: TextStyle(fontSize: 13, color: secondaryTextColor),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _fanartApiKeyController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    hintText: l10n.fanartApiKeyHint,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    suffixIcon: IconButton(
+                      tooltip: l10n.save,
+                      icon: const Icon(CupertinoIcons.check_mark),
+                      onPressed: _saveFanartApiKey,
+                    ),
+                  ),
+                  onSubmitted: (_) => _saveFanartApiKey(),
+                ),
+                if (_fanartApiKeyController.text.trim().isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    l10n.fanartApiKeySaved,
+                    style: TextStyle(fontSize: 13, color: secondaryTextColor),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _saveFanartApiKey() async {
+    final storage = StorageService();
+    await storage.saveFanartApiKey(_fanartApiKeyController.text);
+    await FanartService().reloadSettings();
+    if (mounted) setState(() {});
+  }
+
   Widget _buildGaplessSection() {
     return Consumer<PlayerProvider>(
       builder: (context, player, _) {
         final accent = Theme.of(context).colorScheme.primary;
+        final l10n = AppLocalizations.of(context)!;
         return _buildSection(
-          title: 'Gapless Playback',
+          title: l10n.gaplessPlaybackTitle,
           children: [
             ListTile(
               contentPadding: const EdgeInsets.symmetric(
@@ -424,12 +544,12 @@ class _SettingsPlaybackTabState extends State<SettingsPlaybackTab> {
                   size: 18,
                 ),
               ),
-              title: const Text(
-                'Gapless Playback',
+              title: Text(
+                l10n.gaplessPlaybackTitle,
                 style: TextStyle(fontSize: 16),
               ),
               subtitle: Text(
-                'Eliminate silence between songs',
+                l10n.gaplessPlaybackSubtitle,
                 style: TextStyle(
                   fontSize: 13,
                   color: Theme.of(context).brightness == Brightness.dark

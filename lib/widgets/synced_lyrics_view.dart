@@ -7,8 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:battery_plus/battery_plus.dart';
-import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:window_manager/window_manager.dart';
 import '../models/lyrics.dart';
 import '../models/song.dart';

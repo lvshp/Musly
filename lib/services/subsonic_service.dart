@@ -1,3 +1,5 @@
+// ignore_for_file: experimental_member_use
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
@@ -84,6 +86,7 @@ class SubsonicService {
 
   Future<void> configure(ServerConfig config) async {
     _config = config;
+    _stableAuthParams = null;
     if (config.isJellyfin) {
       _jellyfin ??= JellyfinService();
       _jellyfin!.configure(config);
@@ -142,7 +145,7 @@ class SubsonicService {
     final hasClientCert = clientCertPath != null && clientCertPath.isNotEmpty;
 
     if (hasCustomServerCert || allowSelfSigned || hasClientCert) {
-      // Pre-load certificate files asynchronously to avoid blocking UI
+      // Pre-load certificate files asynchronously to avoid blocking UI.
       Uint8List? customServerCertBytes;
       Uint8List? clientCertBytes;
 
@@ -151,9 +154,12 @@ class SubsonicService {
           final file = File(customCertPath);
           if (await file.exists()) {
             customServerCertBytes = await file.readAsBytes();
+          } else {
+            throw StateError('Custom server certificate not found');
           }
         } catch (e) {
           debugPrint('Failed to load custom server certificate: $e');
+          rethrow;
         }
       }
 
@@ -162,9 +168,12 @@ class SubsonicService {
           final file = File(clientCertPath);
           if (await file.exists()) {
             clientCertBytes = await file.readAsBytes();
+          } else {
+            throw StateError('Client certificate not found');
           }
         } catch (e) {
           debugPrint('Failed to load client certificate: $e');
+          rethrow;
         }
       }
 
@@ -190,16 +199,26 @@ class SubsonicService {
 
           if (hasClientCert && clientCertBytes != null) {
             final password = clientCertPassword;
+            final lowerPath = clientCertPath.toLowerCase();
+            final isPkcs12 =
+                lowerPath.endsWith('.p12') || lowerPath.endsWith('.pfx');
 
-            context.useCertificateChainBytes(clientCertBytes,
-                password: password);
-
-            context.usePrivateKeyBytes(clientCertBytes, password: password);
+            if (isPkcs12) {
+              context.useCertificateChain(clientCertPath, password: password);
+              context.usePrivateKey(clientCertPath, password: password);
+            } else {
+              context.useCertificateChainBytes(
+                clientCertBytes,
+                password: password,
+              );
+              context.usePrivateKeyBytes(clientCertBytes, password: password);
+            }
           }
 
           return buildClient(context);
         } catch (e) {
           debugPrint('Failed to configure TLS: $e');
+          if (hasCustomServerCert || hasClientCert) rethrow;
           return buildClient(SecurityContext(withTrustedRoots: true));
         }
       }
@@ -330,13 +349,16 @@ class SubsonicService {
               'Cannot connect to server. Check the URL and your internet connection.');
         case DioExceptionType.badResponse:
           final status = e.response?.statusCode;
-          if (status == 401 || status == 403)
+          if (status == 401 || status == 403) {
             throw Exception('Invalid username or password.');
-          if (status == 404)
+          }
+          if (status == 404) {
             throw Exception('Server not found. Check your URL path.');
-          if (status != null && status >= 500)
+          }
+          if (status != null && status >= 500) {
             throw Exception(
                 'Server error ($status). The server failed to process the request.');
+          }
           throw Exception('Request failed (HTTP $status).');
         default:
           throw Exception('Network error. Check your connection.');
@@ -389,8 +411,9 @@ class SubsonicService {
   }
 
   String getCoverArtUrl(String? coverArt, {int size = 300}) {
-    if (_jellyfin != null)
+    if (_jellyfin != null) {
       return _jellyfin!.getCoverArtUrl(coverArt, size: size);
+    }
     if (_youtube != null) return _youtube!.getCoverArtUrl(coverArt, size: size);
     if (coverArt == null || _config == null) {
       return '';
@@ -420,9 +443,10 @@ class SubsonicService {
   }
 
   String getStreamUrl(String songId, {int? maxBitRate, String? format}) {
-    if (_jellyfin != null)
+    if (_jellyfin != null) {
       return _jellyfin!
           .getStreamUrl(songId, maxBitRate: maxBitRate, format: format);
+    }
     if (_youtube != null) return _youtube!.getStreamUrl(songId);
     final params = <String, String>{'id': songId};
     if (maxBitRate != null) {
@@ -462,6 +486,14 @@ class SubsonicService {
   }
 
   Future<Artist> getArtist(String id) async {
+    if (_jellyfin != null) return _jellyfin!.getArtist(id);
+    if (_youtube != null) {
+      final artists = await _youtube!.getArtists();
+      return artists.firstWhere(
+        (artist) => artist.id == id,
+        orElse: () => Artist(id: id, name: 'Unknown Artist'),
+      );
+    }
     final response = await _request('getArtist', {'id': id});
     return Artist.fromJson(response['artist'] as Map<String, dynamic>);
   }
@@ -471,10 +503,12 @@ class SubsonicService {
     int size = 20,
     int offset = 0,
   }) async {
-    if (_jellyfin != null)
+    if (_jellyfin != null) {
       return _jellyfin!.getAlbumList(type: type, size: size, offset: offset);
-    if (_youtube != null)
+    }
+    if (_youtube != null) {
       return _youtube!.getAlbumList(type: type, size: size, offset: offset);
+    }
     final response = await _request('getAlbumList2', {
       'type': type,
       'size': size.toString(),
@@ -632,9 +666,10 @@ class SubsonicService {
       debugPrint('updatePlaylist successful');
     } on DioException catch (e) {
       final status = e.response?.statusCode;
-      if (status != null && status >= 500)
+      if (status != null && status >= 500) {
         throw Exception(
             'Server error ($status). The server failed to process the request.');
+      }
       throw Exception('Network error. Check your connection.');
     }
   }
@@ -657,16 +692,18 @@ class SubsonicService {
     int albumCount = 20,
     int songCount = 20,
   }) async {
-    if (_jellyfin != null)
+    if (_jellyfin != null) {
       return _jellyfin!.search(query,
           songCount: songCount,
           albumCount: albumCount,
           artistCount: artistCount);
-    if (_youtube != null)
+    }
+    if (_youtube != null) {
       return _youtube!.search(query,
           songCount: songCount,
           albumCount: albumCount,
           artistCount: artistCount);
+    }
     final response = await _request('search3', {
       'query': query,
       'artistCount': artistCount.toString(),
@@ -714,10 +751,12 @@ class SubsonicService {
   }
 
   Future<List<Song>> getRandomSongs({int size = 20, String? genre}) async {
-    if (_jellyfin != null)
+    if (_jellyfin != null) {
       return _jellyfin!.getRandomSongs(size: size, genre: genre);
-    if (_youtube != null)
+    }
+    if (_youtube != null) {
       return _youtube!.getRandomSongs(size: size, genre: genre);
+    }
     final params = <String, String>{'size': size.toString()};
     if (genre != null) params['genre'] = genre;
 
@@ -831,8 +870,9 @@ class SubsonicService {
   Future<Map<String, dynamic>?> getLyricsBySongId(String songId) async {
     if (_jellyfin != null) {
       final result = await _jellyfin!.getLyrics(songId);
-      if (result != null && result.containsKey('structuredLyrics'))
+      if (result != null && result.containsKey('structuredLyrics')) {
         return result;
+      }
       return null;
     }
     try {
@@ -863,10 +903,12 @@ class SubsonicService {
     int count = 50,
     int offset = 0,
   }) async {
-    if (_jellyfin != null)
+    if (_jellyfin != null) {
       return _jellyfin!.getSongsByGenre(genre, size: count, offset: offset);
-    if (_youtube != null)
+    }
+    if (_youtube != null) {
       return _youtube!.getSongsByGenre(genre, size: count, offset: offset);
+    }
     final response = await _request('getSongsByGenre', {
       'genre': genre,
       'count': count.toString(),
@@ -886,10 +928,12 @@ class SubsonicService {
     int size = 50,
     int offset = 0,
   }) async {
-    if (_jellyfin != null)
+    if (_jellyfin != null) {
       return _jellyfin!.getAlbumsByGenre(genre, size: size, offset: offset);
-    if (_youtube != null)
+    }
+    if (_youtube != null) {
       return _youtube!.getAlbumsByGenre(genre, size: size, offset: offset);
+    }
     try {
       final response = await _request('getAlbumList2', {
         'type': 'byGenre',
@@ -942,9 +986,10 @@ class SubsonicService {
           {};
     } on DioException catch (e) {
       final status = e.response?.statusCode;
-      if (status != null && status >= 500)
+      if (status != null && status >= 500) {
         throw Exception(
             'Server error ($status). The server failed to process the request.');
+      }
       throw Exception('Network error. Check your connection.');
     }
   }
@@ -1051,10 +1096,12 @@ class SubsonicService {
     String artistId, {
     int count = 50,
   }) async {
-    if (_jellyfin != null)
+    if (_jellyfin != null) {
       return _jellyfin!.getArtistTopSongs(artistId, count: count);
-    if (_youtube != null)
+    }
+    if (_youtube != null) {
       return _youtube!.getArtistTopSongs(artistId, count: count);
+    }
     try {
       final artist = await getArtist(artistId);
 

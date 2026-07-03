@@ -74,13 +74,13 @@ class ThemePreviewCard extends StatelessWidget {
                         ),
                         child: Builder(
                           builder: (ctx) => Text(
-                          AppLocalizations.of(ctx)!.themeActive,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                            AppLocalizations.of(ctx)!.themeActive,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
                         ),
                       ),
                     ),
@@ -96,7 +96,7 @@ class ThemePreviewCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: theme.safeMode
                               ? Colors.orange
-                              : Colors.purple.withOpacity(0.9),
+                              : Colors.purple.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -112,13 +112,15 @@ class ThemePreviewCard extends StatelessWidget {
                             const SizedBox(width: 3),
                             Builder(
                               builder: (ctx) => Text(
-                              theme.safeMode ? AppLocalizations.of(ctx)!.themeSafeMode : AppLocalizations.of(ctx)!.themeCodeMode,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
+                                theme.safeMode
+                                    ? AppLocalizations.of(ctx)!.themeSafeMode
+                                    : AppLocalizations.of(ctx)!.themeCodeMode,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
                             ),
                           ],
                         ),
@@ -146,14 +148,14 @@ class ThemePreviewCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Builder(
                     builder: (ctx) => Text(
-                    AppLocalizations.of(ctx)!.themeAuthor(theme.author),
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
-                      fontSize: 11,
+                      AppLocalizations.of(ctx)!.themeAuthor(theme.author),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.6),
+                        fontSize: 11,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -165,8 +167,8 @@ class ThemePreviewCard extends StatelessWidget {
                       if (theme.animations.coverRotation ||
                           theme.animations.pulse)
                         Builder(
-                          builder: (ctx) =>
-                              _buildTag(AppLocalizations.of(ctx)!.themeAnimBadge),
+                          builder: (ctx) => _buildTag(
+                              AppLocalizations.of(ctx)!.themeAnimBadge),
                         ),
                     ],
                   ),
@@ -177,7 +179,7 @@ class ThemePreviewCard extends StatelessWidget {
             if (onEdit != null || onDuplicate != null || onDelete != null)
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  color: Colors.white.withValues(alpha: 0.05),
                   borderRadius: const BorderRadius.vertical(
                     bottom: Radius.circular(12),
                   ),
@@ -185,38 +187,39 @@ class ThemePreviewCard extends StatelessWidget {
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    if (onEdit != null)
-                      _buildActionButton(
-                        icon: CupertinoIcons.pencil,
-                        onPressed: onEdit!,
-                      ),
-                    if (onDuplicate != null)
-                      _buildActionButton(
-                        icon: CupertinoIcons.doc_on_doc,
-                        onPressed: onDuplicate!,
-                      ),
-                    if (onExport != null)
-                      _buildActionButton(
-                        icon: CupertinoIcons.square_arrow_up,
-                        onPressed: onExport!,
-                      ),
-                    if (theme.customFlutterCode.enabled && onToggleSafeMode != null)
-                      _buildActionButton(
-                        icon: theme.safeMode
-                            ? CupertinoIcons.shield_slash
-                            : CupertinoIcons.shield,
-                        onPressed: onToggleSafeMode!,
-                        color: theme.safeMode ? Colors.orange : Colors.purple,
-                      ),
-                    if (onDelete != null && theme.id != 'default')
-                      _buildActionButton(
-                        icon: CupertinoIcons.trash,
-                        onPressed: onDelete!,
-                        color: AppTheme.appleMusicRed,
-                      ),
-                  ],
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      if (onEdit != null)
+                        _buildActionButton(
+                          icon: CupertinoIcons.pencil,
+                          onPressed: onEdit!,
+                        ),
+                      if (onDuplicate != null)
+                        _buildActionButton(
+                          icon: CupertinoIcons.doc_on_doc,
+                          onPressed: onDuplicate!,
+                        ),
+                      if (onExport != null)
+                        _buildActionButton(
+                          icon: CupertinoIcons.square_arrow_up,
+                          onPressed: onExport!,
+                        ),
+                      if (theme.customFlutterCode.enabled &&
+                          onToggleSafeMode != null)
+                        _buildActionButton(
+                          icon: theme.safeMode
+                              ? CupertinoIcons.shield_slash
+                              : CupertinoIcons.shield,
+                          onPressed: onToggleSafeMode!,
+                          color: theme.safeMode ? Colors.orange : Colors.purple,
+                        ),
+                      if (onDelete != null && theme.id != 'default')
+                        _buildActionButton(
+                          icon: CupertinoIcons.trash,
+                          onPressed: onDelete!,
+                          color: AppTheme.appleMusicRed,
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -230,13 +233,13 @@ class ThemePreviewCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         text,
         style: TextStyle(
-          color: Colors.white.withOpacity(0.7),
+          color: Colors.white.withValues(alpha: 0.7),
           fontSize: 9,
           fontWeight: FontWeight.w600,
         ),
@@ -253,7 +256,7 @@ class ThemePreviewCard extends StatelessWidget {
       icon: Icon(
         icon,
         size: 18,
-        color: color ?? Colors.white.withOpacity(0.7),
+        color: color ?? Colors.white.withValues(alpha: 0.7),
       ),
       onPressed: onPressed,
       padding: const EdgeInsets.all(6),
@@ -302,7 +305,7 @@ class ThemePreviewCard extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: theme.controls.getColor().withOpacity(0.2),
+            color: theme.controls.getColor().withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(
               theme.artwork.shape == 'circle'
                   ? 20
@@ -315,7 +318,7 @@ class ThemePreviewCard extends StatelessWidget {
             boxShadow: theme.artwork.shadow
                 ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
+                      color: Colors.black.withValues(alpha: 0.3),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -324,7 +327,7 @@ class ThemePreviewCard extends StatelessWidget {
           ),
           child: Icon(
             CupertinoIcons.music_note,
-            color: theme.controls.getColor().withOpacity(0.5),
+            color: theme.controls.getColor().withValues(alpha: 0.5),
             size: 16,
           ),
         ),

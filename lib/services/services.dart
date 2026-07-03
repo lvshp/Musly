@@ -9,6 +9,7 @@ export 'bluetooth_avrcp_service.dart';
 export 'samsung_integration_service.dart';
 export 'offline_service.dart';
 export 'cache_settings_service.dart';
+export 'fanart_service.dart';
 export 'bpm_analyzer_service.dart';
 export 'recommendation_service.dart';
 export 'auto_dj_service.dart';

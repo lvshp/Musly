@@ -1,3 +1,5 @@
+// ignore_for_file: experimental_member_use
+
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as pkg_http;
@@ -49,7 +51,8 @@ class _YoutubeStreamAudioSource extends StreamAudioSource {
         if (streams.isEmpty) continue;
         _cachedInfo = streams.withHighestBitrate();
         _cachedAt = DateTime.now();
-        debugPrint('[YouTube] Stream info cached for $_videoId (client=$clientList)');
+        debugPrint(
+            '[YouTube] Stream info cached for $_videoId (client=$clientList)');
         return _cachedInfo!;
       } catch (e) {
         debugPrint('[YouTube] Manifest fetch failed (client=$clientList): $e');
@@ -78,7 +81,8 @@ class _YoutubeStreamAudioSource extends StreamAudioSource {
       // URL is expired or rate-limited — clear cache so next call re-fetches
       _cachedInfo = null;
       _cachedAt = null;
-      debugPrint('[YouTube] Stream URL rejected (${resp.statusCode}) for $_videoId');
+      debugPrint(
+          '[YouTube] Stream URL rejected (${resp.statusCode}) for $_videoId');
       throw Exception('YouTube stream URL rejected: ${resp.statusCode}');
     }
 
@@ -222,8 +226,7 @@ class YoutubeService {
 
   Future<Playlist> getPlaylist(String id) async {
     final pl = await _client.playlists.get(id);
-    final videos =
-        await _client.playlists.getVideos(id).take(100).toList();
+    final videos = await _client.playlists.getVideos(id).take(100).toList();
     return Playlist(
       id: pl.id.value,
       name: pl.title,

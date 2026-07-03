@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/album.dart';
 import '../models/playlist.dart';
 import '../theme/app_theme.dart';
+import 'album_artwork.dart';
 
 class QuickAccessGrid extends StatelessWidget {
   final List<Album> albums;
@@ -102,12 +103,12 @@ class _QuickAccessItemState extends State<_QuickAccessItem> {
                 child: SizedBox(
                   width: 80,
                   height: 80,
-                  child: widget.coverArt != null
-                      ? Image.network(
-                          widget.coverArt!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              _buildPlaceholder(isDark),
+                  child: widget.coverArt != null && widget.coverArt!.isNotEmpty
+                      ? AlbumArtwork(
+                          coverArt: widget.coverArt,
+                          size: 80,
+                          borderRadius: 0,
+                          shadow: const BoxShadow(color: Colors.transparent),
                         )
                       : _buildPlaceholder(isDark),
                 ),

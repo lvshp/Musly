@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../services/subsonic_service.dart';
 import '../widgets/widgets.dart';
+import '../l10n/app_localizations.dart';
+import 'album_screen.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -51,7 +53,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Favorites'),
+        title: Text(AppLocalizations.of(context)!.favorites),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Container(
@@ -60,13 +62,13 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             child: Row(
               children: [
                 _TabButton(
-                  title: 'Songs',
+                  title: AppLocalizations.of(context)!.songs,
                   isSelected: _selectedTab == 0,
                   onTap: () => setState(() => _selectedTab = 0),
                 ),
                 const SizedBox(width: 8),
                 _TabButton(
-                  title: 'Albums',
+                  title: AppLocalizations.of(context)!.albums,
                   isSelected: _selectedTab == 1,
                   onTap: () => setState(() => _selectedTab = 1),
                 ),
@@ -78,20 +80,20 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _selectedTab == 0
-          ? _buildSongsList()
-          : _buildAlbumsList(),
+              ? _buildSongsList()
+              : _buildAlbumsList(),
     );
   }
 
   Widget _buildSongsList() {
     if (_favoriteSongs.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.favorite_border, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('No favorite songs yet'),
+            const Icon(Icons.favorite_border, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(AppLocalizations.of(context)!.noFavoriteSongsYet),
           ],
         ),
       );
@@ -143,9 +145,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               const SizedBox(height: 16),
               ListTile(
                 leading: const Icon(Icons.heart_broken, color: Colors.red),
-                title: const Text(
-                  'Remove from Favorites',
-                  style: TextStyle(color: Colors.white),
+                title: Text(
+                  AppLocalizations.of(context)!.removeFromFavorites,
+                  style: const TextStyle(color: Colors.white),
                 ),
                 onTap: () async {
                   Navigator.pop(context);
@@ -173,9 +175,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           _favoriteSongs.removeAt(index);
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Removed from favorites'),
-            duration: Duration(seconds: 1),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.removedFromFavorites),
+            duration: const Duration(seconds: 1),
           ),
         );
       }
@@ -183,7 +185,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text('${AppLocalizations.of(context)!.error}: $e'),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -193,13 +195,13 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   Widget _buildAlbumsList() {
     if (_favoriteAlbums.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.favorite_border, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('No favorite albums yet'),
+            const Icon(Icons.favorite_border, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(AppLocalizations.of(context)!.noFavoriteAlbumsYet),
           ],
         ),
       );
@@ -216,7 +218,16 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       itemCount: _favoriteAlbums.length,
       itemBuilder: (context, index) {
         final album = _favoriteAlbums[index];
-        return AlbumCard(album: album, size: double.infinity, onTap: () {});
+        return AlbumCard(
+          album: album,
+          size: double.infinity,
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AlbumScreen(albumId: album.id),
+            ),
+          ),
+        );
       },
     );
   }
@@ -242,8 +253,8 @@ class _TabButton extends StatelessWidget {
       child: Material(
         color: isSelected
             ? (isDark
-                  ? Colors.white.withValues(alpha: 0.15)
-                  : Colors.black.withValues(alpha: 0.08))
+                ? Colors.white.withValues(alpha: 0.15)
+                : Colors.black.withValues(alpha: 0.08))
             : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         child: InkWell(

@@ -12,6 +12,11 @@ bool isLocalFilePath(String? s) {
   return false;
 }
 
+bool isRemoteImageUrl(String? s) {
+  if (s == null || s.isEmpty) return false;
+  return s.startsWith('http://') || s.startsWith('https://');
+}
+
 class _ImageUrlCache {
   static final Map<String, String> _cache = {};
 
@@ -22,6 +27,13 @@ class _ImageUrlCache {
       key,
       () => service.getCoverArtUrl(coverArt, size: size),
     );
+  }
+
+  static int requestSizeForDisplay(int displaySize) {
+    if (displaySize <= 160) return 160;
+    if (displaySize <= 360) return 300;
+    if (displaySize <= 700) return 600;
+    return 900;
   }
 }
 
@@ -58,13 +70,12 @@ class AlbumArtwork extends StatelessWidget {
                 return ValueListenableBuilder<String>(
                   valueListenable: svc.artworkShadowColorNotifier,
                   builder: (context, shadowColor, _) {
-                    final resolvedRadius =
-                        borderRadius ??
+                    final resolvedRadius = borderRadius ??
                         (shape == 'circle'
                             ? 9999.0
                             : shape == 'square'
-                            ? 0.0
-                            : globalRadius);
+                                ? 0.0
+                                : globalRadius);
                     return _buildContent(
                       context,
                       resolvedRadius,
@@ -134,6 +145,7 @@ class AlbumArtwork extends StatelessWidget {
 
     final dpr = MediaQuery.devicePixelRatioOf(context);
     final cacheSize = (validSize * dpr).toInt().clamp(200, 800);
+    final requestSize = _ImageUrlCache.requestSizeForDisplay(cacheSize);
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final resolvedShadow = _resolvedShadow(
@@ -153,7 +165,7 @@ class AlbumArtwork extends StatelessWidget {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(resolvedRadius),
-          child: _buildImageNatural(isDark, cacheSize),
+          child: _buildImageNatural(isDark, cacheSize, requestSize),
         ),
       );
     }
@@ -163,19 +175,17 @@ class AlbumArtwork extends StatelessWidget {
       height: validSize,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(resolvedRadius),
-
-        boxShadow: resolvedShadow != null && validSize > 60
-            ? [resolvedShadow]
-            : null,
+        boxShadow:
+            resolvedShadow != null && validSize > 60 ? [resolvedShadow] : null,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(resolvedRadius),
-        child: _buildImage(isDark, cacheSize),
+        child: _buildImage(isDark, cacheSize, requestSize),
       ),
     );
   }
 
-  Widget _buildImageNatural(bool isDark, int cacheSize) {
+  Widget _buildImageNatural(bool isDark, int cacheSize, int requestSize) {
     if (coverArt == null || coverArt!.isEmpty) return _buildPlaceholder(isDark);
 
     if (isLocalFilePath(coverArt)) {
@@ -190,31 +200,35 @@ class AlbumArtwork extends StatelessWidget {
 
     return Builder(
       builder: (context) {
-        final imageUrl = _ImageUrlCache.getUrl(
-          Provider.of<SubsonicService>(context, listen: false),
-          coverArt,
-          cacheSize,
-        );
+        final imageUrl = isRemoteImageUrl(coverArt)
+            ? coverArt!
+            : _ImageUrlCache.getUrl(
+                Provider.of<SubsonicService>(context, listen: false),
+                coverArt,
+                requestSize,
+              );
         if (imageUrl.isEmpty) return _buildPlaceholder(isDark);
         return CachedNetworkImage(
           imageUrl: imageUrl,
-          cacheKey: '${coverArt}_natural_$cacheSize',
-          key: ValueKey('${coverArt}_natural_$cacheSize'),
+          cacheKey: '${coverArt}_natural_$requestSize',
+          key: ValueKey('${coverArt}_natural_$requestSize'),
           fit: BoxFit.contain,
+          memCacheWidth: cacheSize,
+          maxWidthDiskCache: requestSize,
           fadeInDuration: const Duration(milliseconds: 100),
           fadeOutDuration: Duration.zero,
           useOldImageOnUrlChange: true,
           placeholder: (ctx, url) => _buildPlaceholder(isDark),
           errorWidget: (ctx, err, stack) {
             debugPrint('AlbumArtwork error (natural): $err');
-            return _buildNetworkImageFallback(imageUrl, isDark, BoxFit.contain);
+            return _buildPlaceholder(isDark);
           },
         );
       },
     );
   }
 
-  Widget _buildImage(bool isDark, int cacheSize) {
+  Widget _buildImage(bool isDark, int cacheSize, int requestSize) {
     if (coverArt == null || coverArt!.isEmpty) return _buildPlaceholder(isDark);
 
     if (isLocalFilePath(coverArt)) {
@@ -231,41 +245,32 @@ class AlbumArtwork extends StatelessWidget {
 
     return Builder(
       builder: (context) {
-        final imageUrl = _ImageUrlCache.getUrl(
-          Provider.of<SubsonicService>(context, listen: false),
-          coverArt,
-          cacheSize,
-        );
+        final imageUrl = isRemoteImageUrl(coverArt)
+            ? coverArt!
+            : _ImageUrlCache.getUrl(
+                Provider.of<SubsonicService>(context, listen: false),
+                coverArt,
+                requestSize,
+              );
         if (imageUrl.isEmpty) return _buildPlaceholder(isDark);
         return CachedNetworkImage(
           imageUrl: imageUrl,
-          cacheKey: '${coverArt}_$cacheSize',
-          key: ValueKey('${coverArt}_$cacheSize'),
+          cacheKey: '${coverArt}_$requestSize',
+          key: ValueKey('${coverArt}_$requestSize'),
           fit: BoxFit.cover,
           memCacheWidth: cacheSize,
           memCacheHeight: cacheSize,
-          maxWidthDiskCache: cacheSize,
-          maxHeightDiskCache: cacheSize,
+          maxWidthDiskCache: requestSize,
+          maxHeightDiskCache: requestSize,
           fadeInDuration: const Duration(milliseconds: 100),
           fadeOutDuration: Duration.zero,
           useOldImageOnUrlChange: true,
           placeholder: (ctx, url) => _buildPlaceholder(isDark),
           errorWidget: (ctx, err, stack) {
             debugPrint('AlbumArtwork error: $err');
-            return _buildNetworkImageFallback(imageUrl, isDark, BoxFit.cover);
+            return _buildPlaceholder(isDark);
           },
         );
-      },
-    );
-  }
-
-  Widget _buildNetworkImageFallback(String url, bool isDark, BoxFit fit) {
-    return Image.network(
-      url,
-      fit: fit,
-      errorBuilder: (ctx, err, stack) {
-        debugPrint('Network image fallback error: $err');
-        return _buildPlaceholder(isDark);
       },
     );
   }

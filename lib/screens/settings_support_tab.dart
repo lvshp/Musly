@@ -26,7 +26,8 @@ class SettingsSupportTab extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
-    final secondaryTextColor = isDark ? AppTheme.darkSecondaryText : AppTheme.lightSecondaryText;
+    final secondaryTextColor =
+        isDark ? AppTheme.darkSecondaryText : AppTheme.lightSecondaryText;
 
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 24),
@@ -62,7 +63,7 @@ class SettingsSupportTab extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -200,7 +201,9 @@ class SettingsSupportTab extends StatelessWidget {
             l10n.supportMadeWithLove,
             style: TextStyle(
               fontSize: 14,
-              color: isDark ? AppTheme.darkSecondaryText : AppTheme.lightSecondaryText,
+              color: isDark
+                  ? AppTheme.darkSecondaryText
+                  : AppTheme.lightSecondaryText,
             ),
           ),
         ),
@@ -230,7 +233,7 @@ class SettingsSupportTab extends StatelessWidget {
             color: isDark ? AppTheme.darkSurface : Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: color.withOpacity(0.3),
+              color: color.withValues(alpha: 0.3),
               width: 2,
             ),
           ),
@@ -240,7 +243,7 @@ class SettingsSupportTab extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -266,7 +269,9 @@ class SettingsSupportTab extends StatelessWidget {
                       subtitle,
                       style: TextStyle(
                         fontSize: 13,
-                        color: isDark ? AppTheme.darkSecondaryText : AppTheme.lightSecondaryText,
+                        color: isDark
+                            ? AppTheme.darkSecondaryText
+                            : AppTheme.lightSecondaryText,
                       ),
                     ),
                   ],
@@ -291,7 +296,8 @@ class SettingsSupportTab extends StatelessWidget {
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
-    final secondaryTextColor = isDark ? AppTheme.darkSecondaryText : AppTheme.lightSecondaryText;
+    final secondaryTextColor =
+        isDark ? AppTheme.darkSecondaryText : AppTheme.lightSecondaryText;
 
     return Row(
       children: [

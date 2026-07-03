@@ -350,6 +350,26 @@ class JellyfinService {
     }
   }
 
+  Future<Artist> getArtist(String artistId) async {
+    if (_userId == null) {
+      return Artist(id: artistId, name: 'Unknown Artist');
+    }
+    try {
+      final data = await _get(
+        '/Users/$_userId/Items/$artistId',
+        params: {'Fields': 'AlbumCount'},
+      );
+      return _artistFromItem(data);
+    } catch (e) {
+      debugPrint('[Jellyfin] getArtist error: $e');
+      final matches = await getArtists();
+      return matches.firstWhere(
+        (artist) => artist.id == artistId,
+        orElse: () => Artist(id: artistId, name: 'Unknown Artist'),
+      );
+    }
+  }
+
   Future<List<Album>> getArtistAlbums(String artistId) async {
     if (_userId == null) return [];
     try {
@@ -436,8 +456,9 @@ class JellyfinService {
     int albumCount = 20,
     int artistCount = 20,
   }) async {
-    if (_userId == null)
+    if (_userId == null) {
       return SearchResult(songs: [], albums: [], artists: []);
+    }
     try {
       Future<List<T>> fetch<T>(
         String types,
@@ -495,8 +516,9 @@ class JellyfinService {
   }
 
   Future<SearchResult> getStarred() async {
-    if (_userId == null)
+    if (_userId == null) {
       return SearchResult(songs: [], albums: [], artists: []);
+    }
     try {
       Future<List<T>> fetch<T>(
         String types,

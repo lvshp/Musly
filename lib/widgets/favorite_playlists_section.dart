@@ -17,33 +17,34 @@ class FavoritePlaylistsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    
+
     return AnimatedBuilder(
       animation: FavoritePlaylistsService(),
       builder: (context, child) {
         final favoriteIds = FavoritePlaylistsService().getFavoriteIds();
-        
+
         if (favoriteIds.isEmpty) {
           return const SizedBox.shrink();
         }
-        
+
         return Consumer<LibraryProvider>(
           builder: (context, libraryProvider, child) {
             // Get favorite playlists that exist in the library
             final favoritePlaylists = libraryProvider.playlists
                 .where((p) => favoriteIds.contains(p.id))
                 .toList();
-            
+
             // If no playlists are loaded yet or favorites don't match loaded playlists
             if (favoritePlaylists.isEmpty) {
               return const SizedBox.shrink();
             }
-            
+
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -153,7 +154,7 @@ class _PlaylistCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
+                      color: Colors.black.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(

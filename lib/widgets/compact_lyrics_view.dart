@@ -6,6 +6,8 @@ import '../models/song.dart';
 import '../providers/player_provider.dart';
 import '../services/subsonic_service.dart';
 import '../services/offline_service.dart';
+import '../services/storage_service.dart';
+import '../services/lrclib_service.dart';
 import 'synced_lyrics_view.dart'
     show AppleMusicLyricsController, AMLLLyricsWidget;
 import '../l10n/app_localizations.dart';
@@ -166,6 +168,61 @@ class _CompactLyricsViewState extends State<CompactLyricsView> {
             _applyLyrics(SyncedLyrics.fromPlainText(value));
           }
           return;
+        }
+      }
+
+      final storageService = StorageService();
+      final lrcLibEnabled = await storageService.getLrcLibFallback();
+      if (lrcLibEnabled && _song.artist != null) {
+        final fallbackLyrics = await LrcLibService().searchLyrics(
+          artist: _song.artist!,
+          title: _song.title,
+          durationSeconds: _song.duration,
+        );
+        if (!mounted) return;
+        if (fallbackLyrics != null) {
+          final cacheMap = <String, dynamic>{};
+          if (fallbackLyrics.containsKey('structuredLyrics')) {
+            cacheMap['lyricsList'] = fallbackLyrics;
+            final structuredLyrics = fallbackLyrics['structuredLyrics'];
+            if (structuredLyrics is List && structuredLyrics.isNotEmpty) {
+              final syncedEntry =
+                  structuredLyrics.cast<Map<String, dynamic>>().firstWhere(
+                        (l) => l['synced'] == true,
+                        orElse: () => <String, dynamic>{},
+                      );
+              final lines = syncedEntry['line'] as List?;
+              if (lines != null && lines.isNotEmpty) {
+                await offlineService.saveLyrics(_song.id, cacheMap);
+                final parsedLines = lines
+                    .map<LyricLine>((line) {
+                      final start = line['start'] as int? ?? 0;
+                      return LyricLine(
+                        timestamp: Duration(milliseconds: start),
+                        text: line['value']?.toString() ?? '',
+                      );
+                    })
+                    .where((l) => l.text.isNotEmpty)
+                    .toList();
+                if (parsedLines.isNotEmpty) {
+                  _applyLyrics(SyncedLyrics(lines: parsedLines));
+                  return;
+                }
+              }
+            }
+          }
+
+          final value = fallbackLyrics['value']?.toString();
+          if (value != null && value.isNotEmpty) {
+            cacheMap['lyrics'] = fallbackLyrics;
+            await offlineService.saveLyrics(_song.id, cacheMap);
+            if (value.contains('[') && value.contains(':')) {
+              _applyLyrics(SyncedLyrics.fromLrc(value));
+            } else {
+              _applyLyrics(SyncedLyrics.fromPlainText(value));
+            }
+            return;
+          }
         }
       }
 

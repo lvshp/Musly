@@ -12,6 +12,8 @@ class StorageService {
   static const String _repeatModeKey = 'repeat_mode';
   static const String _gaplessPlaybackKey = 'gapless_playback';
   static const String _lrcLibFallbackKey = 'lrclib_fallback';
+  static const String _fanartArtworkKey = 'fanart_artwork_enabled';
+  static const String _fanartApiKeyKey = 'fanart_api_key';
   static const String _volumeKey = 'volume';
 
   Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
@@ -149,6 +151,26 @@ class StorageService {
     return prefs.getBool(_lrcLibFallbackKey) ?? false;
   }
 
+  Future<void> saveFanartArtworkEnabled(bool enabled) async {
+    final prefs = await _prefs;
+    await prefs.setBool(_fanartArtworkKey, enabled);
+  }
+
+  Future<bool> getFanartArtworkEnabled() async {
+    final prefs = await _prefs;
+    return prefs.getBool(_fanartArtworkKey) ?? false;
+  }
+
+  Future<void> saveFanartApiKey(String apiKey) async {
+    final prefs = await _prefs;
+    await prefs.setString(_fanartApiKeyKey, apiKey.trim());
+  }
+
+  Future<String> getFanartApiKey() async {
+    final prefs = await _prefs;
+    return prefs.getString(_fanartApiKeyKey) ?? '';
+  }
+
   Future<void> saveVolume(double volume) async {
     final prefs = await _prefs;
     await prefs.setDouble(_volumeKey, volume);
@@ -166,7 +188,7 @@ class StorageService {
 
   Future<bool> getDiscordRpcEnabled() async {
     final prefs = await _prefs;
-    return prefs.getBool('discord_rpc_enabled') ?? true; 
+    return prefs.getBool('discord_rpc_enabled') ?? true;
   }
 
   Future<void> saveDiscordRpcStateStyle(String style) async {

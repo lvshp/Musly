@@ -750,6 +750,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       delegate: LibrarySearchDelegate(
         libraryProvider: libraryProvider,
         isDark: isDark,
+        searchFieldLabel: AppLocalizations.of(context)!.searchInLibrary,
       ),
     );
   }

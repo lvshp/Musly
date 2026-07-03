@@ -16,7 +16,7 @@ class LrcLibService {
   /// Searches LRCLIB for a track matching [artist] and [title].
   ///
   /// Returns a map compatible with the Subsonic `getLyrics` response:
-  ///   { 'value': '<plain lyrics>' }
+  ///   { 'value': 'plain lyrics' }
   /// or with `getLyricsBySongId` / structured lyrics:
   ///   { 'structuredLyrics': [ { 'synced': true, 'line': [...] } ] }
   ///
@@ -74,7 +74,8 @@ class LrcLibService {
       if (line.isEmpty) continue;
 
       // Parse [mm:ss.xx] or [mm:ss.xxx] tags
-      final match = RegExp(r'\[(\d+):(\d{2})\.(\d{2,3})\](.*)').firstMatch(line);
+      final match =
+          RegExp(r'\[(\d+):(\d{2})\.(\d{2,3})\](.*)').firstMatch(line);
       if (match == null) continue;
 
       final minutes = int.parse(match.group(1)!);
@@ -84,12 +85,10 @@ class LrcLibService {
       if (text.isEmpty) continue;
 
       // Normalise fractional seconds to milliseconds
-      final fracMs = fracStr.length == 2
-          ? int.parse(fracStr) * 10
-          : int.parse(fracStr);
+      final fracMs =
+          fracStr.length == 2 ? int.parse(fracStr) * 10 : int.parse(fracStr);
 
-      final startMs =
-          (minutes * 60 + seconds) * 1000 + fracMs.clamp(0, 999);
+      final startMs = (minutes * 60 + seconds) * 1000 + fracMs.clamp(0, 999);
 
       lines.add({
         'start': startMs,

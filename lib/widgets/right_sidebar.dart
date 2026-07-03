@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/song.dart';
 import '../providers/player_provider.dart';
 import '../theme/app_theme.dart';
+import '../l10n/app_localizations.dart';
 import 'album_artwork.dart';
 
 class RightSidebar extends StatelessWidget {
@@ -11,6 +12,7 @@ class RightSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     return Container(
       width: 320,
@@ -24,7 +26,7 @@ class RightSidebar extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Queue',
+                    l10n.queue,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -42,7 +44,7 @@ class RightSidebar extends StatelessWidget {
                   onPressed: () {
                     // Toggle sidebar visibility
                   },
-                  tooltip: 'Close',
+                  tooltip: l10n.close,
                 ),
               ],
             ),
@@ -67,7 +69,7 @@ class RightSidebar extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'No songs in queue',
+                          l10n.jukeboxQueueEmpty,
                           style: TextStyle(
                             color: isDark
                                 ? AppTheme.darkSecondaryText
@@ -135,8 +137,8 @@ class _QueueItemState extends State<_QueueItem> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           color: _isHovered
               ? (isDark
-                  ? Colors.white.withOpacity(0.1)
-                  : Colors.black.withOpacity(0.05))
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.black.withValues(alpha: 0.05))
               : Colors.transparent,
           child: Row(
             children: [

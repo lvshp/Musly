@@ -4,6 +4,7 @@ import '../services/subsonic_service.dart';
 import '../models/song.dart';
 import '../theme/app_theme.dart';
 import '../widgets/widgets.dart';
+import '../l10n/app_localizations.dart';
 
 class MadeForYouScreen extends StatefulWidget {
   const MadeForYouScreen({super.key});
@@ -65,7 +66,7 @@ class _MadeForYouScreenState extends State<MadeForYouScreen> {
             expandedHeight: 140,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                'Made For You',
+                AppLocalizations.of(context)!.madeForYou,
                 style: theme.appBarTheme.titleTextStyle,
               ),
               titlePadding: const EdgeInsets.only(left: 52, bottom: 16),
@@ -74,7 +75,7 @@ class _MadeForYouScreenState extends State<MadeForYouScreen> {
               IconButton(
                 icon: const Icon(Icons.refresh),
                 onPressed: _refreshSongs,
-                tooltip: 'Shuffle',
+                tooltip: AppLocalizations.of(context)!.shuffle,
               ),
             ],
           ),

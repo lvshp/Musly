@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/artist.dart';
+import '../services/fanart_service.dart';
 import '../theme/app_theme.dart';
 import 'album_artwork.dart';
 
@@ -23,6 +24,32 @@ class ArtistCard extends StatefulWidget {
 
 class _ArtistCardState extends State<ArtistCard> {
   bool _isHovered = false;
+  String? _fanartImageUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFanartImage();
+  }
+
+  @override
+  void didUpdateWidget(covariant ArtistCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.artist.id != widget.artist.id ||
+        oldWidget.artist.coverArt != widget.artist.coverArt ||
+        oldWidget.artist.artistImageUrl != widget.artist.artistImageUrl) {
+      _fanartImageUrl = null;
+      _loadFanartImage();
+    }
+  }
+
+  Future<void> _loadFanartImage() async {
+    final existing = widget.artist.artistImageUrl ?? widget.artist.coverArt;
+    if (existing != null && existing.isNotEmpty) return;
+    final url = await FanartService().getArtistImageUrl(widget.artist.name);
+    if (!mounted || url == null || url.isEmpty) return;
+    setState(() => _fanartImageUrl = url);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,14 +78,14 @@ class _ArtistCardState extends State<ArtistCard> {
                     boxShadow: _isHovered
                         ? [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
+                              color: Colors.black.withValues(alpha: 0.3),
                               blurRadius: 16,
                               offset: const Offset(0, 8),
                             ),
                           ]
                         : [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.15),
+                              color: Colors.black.withValues(alpha: 0.15),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -68,7 +95,9 @@ class _ArtistCardState extends State<ArtistCard> {
                     children: [
                       ClipOval(
                         child: AlbumArtwork(
-                          coverArt: widget.artist.coverArt,
+                          coverArt: widget.artist.artistImageUrl ??
+                              widget.artist.coverArt ??
+                              _fanartImageUrl,
                           size: widget.size,
                           borderRadius: widget.size / 2,
                           shadow: const BoxShadow(color: Colors.transparent),
@@ -96,7 +125,7 @@ class _ArtistCardState extends State<ArtistCard> {
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.3),
+                                    color: Colors.black.withValues(alpha: 0.3),
                                     blurRadius: 8,
                                     offset: const Offset(0, 4),
                                   ),

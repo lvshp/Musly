@@ -5,6 +5,7 @@ import '../models/models.dart';
 import '../providers/providers.dart';
 import '../theme/app_theme.dart';
 import '../widgets/widgets.dart';
+import '../l10n/app_localizations.dart';
 import 'playlist_screen.dart';
 
 class PlaylistsScreen extends StatelessWidget {
@@ -17,7 +18,7 @@ class PlaylistsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Playlists'),
+        title: Text(AppLocalizations.of(context)!.playlists),
         actions: [
           IconButton(
             icon: const Icon(CupertinoIcons.add),
@@ -36,10 +37,13 @@ class PlaylistsScreen extends StatelessWidget {
                     color: AppTheme.lightSecondaryText,
                   ),
                   const SizedBox(height: 16),
-                  Text('No Playlists', style: theme.textTheme.headlineMedium),
+                  Text(
+                    AppLocalizations.of(context)!.noPlaylists,
+                    style: theme.textTheme.headlineMedium,
+                  ),
                   const SizedBox(height: 8),
                   Text(
-                    'Create a playlist to get started',
+                    AppLocalizations.of(context)!.createPlaylist,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: AppTheme.lightSecondaryText,
                     ),
@@ -48,7 +52,7 @@ class PlaylistsScreen extends StatelessWidget {
                   ElevatedButton.icon(
                     onPressed: () => _showCreatePlaylistDialog(context),
                     icon: const Icon(CupertinoIcons.add),
-                    label: const Text('New Playlist'),
+                    label: Text(AppLocalizations.of(context)!.newPlaylist),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.appleMusicRed,
                       foregroundColor: Colors.white,
@@ -90,16 +94,18 @@ class PlaylistsScreen extends StatelessWidget {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('New Playlist'),
+        title: Text(AppLocalizations.of(context)!.newPlaylist),
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(hintText: 'Playlist name'),
+          decoration: InputDecoration(
+            hintText: AppLocalizations.of(context)!.playlistNameHint,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () async {
@@ -114,7 +120,7 @@ class PlaylistsScreen extends StatelessWidget {
                 }
               }
             },
-            child: const Text('Create'),
+            child: Text(AppLocalizations.of(context)!.create),
           ),
         ],
       ),
@@ -153,7 +159,7 @@ class PlaylistsScreen extends StatelessWidget {
               const SizedBox(height: 16),
               ListTile(
                 leading: const Icon(CupertinoIcons.trash, color: Colors.red),
-                title: const Text('Delete Playlist'),
+                title: Text(AppLocalizations.of(context)!.deletePlaylist),
                 onTap: () async {
                   Navigator.pop(context);
                   await libraryProvider.deletePlaylist(playlist.id);
@@ -178,6 +184,7 @@ class _PlaylistTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -207,7 +214,7 @@ class _PlaylistTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
-        '${playlist.songCount ?? 0} songs',
+        l10n.songsCount(playlist.songCount ?? 0),
         style: theme.textTheme.bodySmall,
       ),
       trailing: const Icon(

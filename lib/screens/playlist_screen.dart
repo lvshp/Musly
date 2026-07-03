@@ -93,9 +93,10 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Song removed from playlist'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content:
+                Text(AppLocalizations.of(context)!.songRemovedFromPlaylist),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -103,7 +104,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error removing song: $e'),
+            content: Text(AppLocalizations.of(context)!.errorRemovingSong(e)),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -154,7 +155,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error reordering song: $e'),
+            content: Text(AppLocalizations.of(context)!.errorReorderingSong(e)),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -191,18 +192,19 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Remove songs'),
-        content: Text(
-          'Remove $count ${count == 1 ? 'song' : 'songs'} from this playlist?',
-        ),
+        title: Text(AppLocalizations.of(context)!.removeSongsTitle),
+        content: Text(AppLocalizations.of(context)!.removeSongsQuestion(count)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Remove', style: TextStyle(color: Colors.red)),
+            child: Text(
+              AppLocalizations.of(context)!.remove,
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -240,8 +242,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '$count ${count == 1 ? 'song' : 'songs'} removed from playlist',
-            ),
+                AppLocalizations.of(context)!.songsRemovedFromPlaylist(count)),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -250,7 +251,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error removing songs: $e'),
+            content: Text(AppLocalizations.of(context)!.errorRemovingSongs(e)),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -266,8 +267,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         SnackBar(
           content: Text(
             FavoritePlaylistsService().isFavorite(widget.playlistId)
-                ? 'Added to favorites'
-                : 'Removed from favorites',
+                ? AppLocalizations.of(context)!.addedToFavorites
+                : AppLocalizations.of(context)!.removedFromFavorites,
           ),
           duration: const Duration(seconds: 2),
         ),
@@ -294,7 +295,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Downloaded ${songs.length} songs from ${_playlist!.name}',
+              AppLocalizations.of(context)!
+                  .downloadedSongsFrom(songs.length, _playlist!.name),
             ),
             duration: const Duration(seconds: 3),
           ),
@@ -305,7 +307,10 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Downloading ${songs.length} songs in background…'),
+          content: Text(
+            AppLocalizations.of(context)!
+                .downloadingSongsInBackground(songs.length),
+          ),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -330,7 +335,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     if (_playlist == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('Playlist not found')),
+        body:
+            Center(child: Text(AppLocalizations.of(context)!.playlistNotFound)),
       );
     }
 
@@ -340,14 +346,14 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     if (_isReordering) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Reorder Songs'),
+          title: Text(AppLocalizations.of(context)!.reorderSongs),
           leading: IconButton(
             icon: const Icon(CupertinoIcons.xmark),
             onPressed: _toggleReorderMode,
           ),
           actions: [
             IconButton(
-              tooltip: 'Done reordering',
+              tooltip: AppLocalizations.of(context)!.doneReordering,
               icon: const Icon(CupertinoIcons.checkmark),
               onPressed: _toggleReorderMode,
             ),
@@ -388,7 +394,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${_playlist!.songs?.length ?? 0} songs • ${_playlist!.formattedDuration}',
+                    '${AppLocalizations.of(context)!.songsCount(_playlist!.songs?.length ?? 0)} • ${_playlist!.formattedDuration}',
                     style: theme.textTheme.bodySmall,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -514,8 +520,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                 IconButton(
                   tooltip:
                       _selectedIndices.length == (_playlist?.songs?.length ?? 0)
-                          ? 'Deselect all'
-                          : 'Select all',
+                          ? AppLocalizations.of(context)!.deselectAll
+                          : AppLocalizations.of(context)!.selectAll,
                   icon: Icon(
                     _selectedIndices.length == (_playlist?.songs?.length ?? 0)
                         ? CupertinoIcons.checkmark_square
@@ -524,7 +530,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                   onPressed: _toggleSelectAll,
                 ),
                 IconButton(
-                  tooltip: 'Remove selected',
+                  tooltip: AppLocalizations.of(context)!.removeSelected,
                   icon: const Icon(CupertinoIcons.trash),
                   color: _selectedIndices.isNotEmpty ? Colors.red : null,
                   onPressed:
@@ -538,8 +544,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                         .isFavorite(widget.playlistId);
                     return IconButton(
                       tooltip: isFavorite
-                          ? 'Remove from favorites'
-                          : 'Add to favorites',
+                          ? AppLocalizations.of(context)!.removeFromFavorites
+                          : AppLocalizations.of(context)!.addToFavorites,
                       icon: Icon(
                         isFavorite
                             ? CupertinoIcons.heart_fill
@@ -551,7 +557,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                   },
                 ),
                 IconButton(
-                  tooltip: 'Reorder songs',
+                  tooltip: AppLocalizations.of(context)!.reorderSongs,
                   icon: const Icon(CupertinoIcons.arrow_up_arrow_down),
                   onPressed:
                       _playlist!.songs != null && _playlist!.songs!.length > 1
@@ -559,13 +565,13 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                           : null,
                 ),
                 IconButton(
-                  tooltip: 'Select songs',
+                  tooltip: AppLocalizations.of(context)!.selectSongs,
                   icon: const Icon(CupertinoIcons.checkmark_circle),
                   onPressed: _toggleSelectMode,
                 ),
                 if (!isOffline)
                   IconButton(
-                    tooltip: 'Download playlist',
+                    tooltip: AppLocalizations.of(context)!.downloadPlaylist,
                     onPressed: _isDownloading ? null : _downloadPlaylist,
                     icon: _isDownloading
                         ? const SizedBox(
@@ -593,7 +599,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${_playlist!.songs?.length ?? 0} songs • ${_playlist!.formattedDuration}',
+                    '${AppLocalizations.of(context)!.songsCount(_playlist!.songs?.length ?? 0)} • ${_playlist!.formattedDuration}',
                     style: theme.textTheme.bodySmall,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -630,7 +636,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                 child: Padding(
                   padding: const EdgeInsets.only(top: 40),
                   child: Text(
-                    'No songs in this playlist',
+                    AppLocalizations.of(context)!.noSongsInPlaylist,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: AppTheme.lightSecondaryText,
                     ),
@@ -667,7 +673,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                     secondary: IconButton(
                       icon: const Icon(CupertinoIcons.trash, size: 20),
                       color: Colors.red,
-                      tooltip: 'Remove from playlist',
+                      tooltip: AppLocalizations.of(context)!.removeFromPlaylist,
                       onPressed: () async {
                         setState(() => _selectedIndices.remove(index));
                         await _removeSongFromPlaylist(index);
@@ -709,20 +715,25 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                       return await showDialog<bool>(
                             context: context,
                             builder: (ctx) => AlertDialog(
-                              title: const Text('Remove from playlist'),
+                              title: Text(
+                                AppLocalizations.of(context)!
+                                    .removeFromPlaylist,
+                              ),
                               content: Text(
-                                'Remove "${song.title}" from this playlist?',
+                                AppLocalizations.of(context)!
+                                    .removeSongFromPlaylistQuestion(song.title),
                               ),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(ctx, false),
-                                  child: const Text('Cancel'),
+                                  child: Text(
+                                      AppLocalizations.of(context)!.cancel),
                                 ),
                                 TextButton(
                                   onPressed: () => Navigator.pop(ctx, true),
-                                  child: const Text(
-                                    'Remove',
-                                    style: TextStyle(color: Colors.red),
+                                  child: Text(
+                                    AppLocalizations.of(context)!.remove,
+                                    style: const TextStyle(color: Colors.red),
                                   ),
                                 ),
                               ],
