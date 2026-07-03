@@ -6,7 +6,6 @@ import 'settings_storage_tab.dart';
 import 'settings_server_tab.dart';
 import 'settings_display_tab.dart';
 import 'settings_about_tab.dart';
-import 'settings_support_tab.dart';
 import '../theme/app_theme.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -25,7 +24,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -38,15 +37,13 @@ class _SettingsScreenState extends State<SettingsScreen>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: _isDark
-          ? AppTheme.darkBackground
-          : AppTheme.lightBackground,
+      backgroundColor:
+          _isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
       appBar: AppBar(
         title: Text(l10n.settingsTitle),
         centerTitle: false,
-        backgroundColor: _isDark
-            ? AppTheme.darkBackground
-            : AppTheme.lightBackground,
+        backgroundColor:
+            _isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         bottom: TabBar(
@@ -84,10 +81,6 @@ class _SettingsScreenState extends State<SettingsScreen>
               text: l10n.tabDisplay,
             ),
             Tab(
-              icon: const Icon(CupertinoIcons.heart_fill, size: 20),
-              text: l10n.tabSupport,
-            ),
-            Tab(
               icon: const Icon(CupertinoIcons.info, size: 20),
               text: l10n.tabAbout,
             ),
@@ -101,7 +94,6 @@ class _SettingsScreenState extends State<SettingsScreen>
           SettingsStorageTab(),
           SettingsServerTab(),
           SettingsDisplayTab(),
-          SettingsSupportTab(),
           SettingsAboutTab(),
         ],
       ),

@@ -22,7 +22,7 @@ class FanartService {
       connectTimeout: const Duration(seconds: 8),
       receiveTimeout: const Duration(seconds: 8),
       headers: {
-        'User-Agent': 'Musly/1.0 (https://github.com/dddevid/Musly)',
+        'User-Agent': 'Musly/1.0 (https://github.com/lvshp/Musly)',
       },
     ),
   );

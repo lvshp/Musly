@@ -22,6 +22,9 @@ jobs:
       pull-requests: write
 
     runs-on: ubuntu-latest
+    env:
+      CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+      CROWDIN_API_TOKEN: ${{ secrets.CROWDIN_API_TOKEN }}
 
     steps:
       - name: Checkout code
@@ -29,19 +32,31 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check Crowdin secrets
+        id: crowdin_secrets
+        run: |
+          if [ -z "$CROWDIN_PROJECT_ID" ] || [ -z "$CROWDIN_API_TOKEN" ]; then
+            echo "Crowdin secrets are not configured; skipping translation sync."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
       # Push local translations to Crowdin first so GitHub edits are not lost
       - name: Crowdin push (upload source + local translations)
+        if: steps.crowdin_secrets.outputs.configured == 'true'
         uses: crowdin/github-action@v2
         with:
           upload_sources: true
           upload_translations: true
           download_translations: false
-          project_id: ${{ secrets.CROWDIN_PROJECT_ID }}
-          token: ${{ secrets.CROWDIN_API_TOKEN }}
+          project_id: ${{ env.CROWDIN_PROJECT_ID }}
+          token: ${{ env.CROWDIN_API_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Crowdin pull (download translations)
+        if: steps.crowdin_secrets.outputs.configured == 'true'
         id: crowdin_pull
         uses: crowdin/github-action@v2
         with:
@@ -51,12 +66,13 @@ jobs:
           skip_untranslated_strings: true
           export_only_approved: false
           create_pull_request: false
-          project_id: ${{ secrets.CROWDIN_PROJECT_ID }}
-          token: ${{ secrets.CROWDIN_API_TOKEN }}
+          project_id: ${{ env.CROWDIN_PROJECT_ID }}
+          token: ${{ env.CROWDIN_API_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Normalize ARB locales
+        if: steps.crowdin_secrets.outputs.configured == 'true'
         run: |
           for file in lib/l10n/app_*.arb; do
             locale=$(basename "$file" .arb | sed 's/app_//')
@@ -65,6 +81,7 @@ jobs:
 
       # Remove translation keys that do not exist in app_en.arb (orphaned keys)
       - name: Cleanup extra translation keys
+        if: steps.crowdin_secrets.outputs.configured == 'true'
         run: |
           python3 << 'EOF'
           import json
@@ -96,15 +113,17 @@ jobs:
           EOF
 
       - name: Fix file permissions
+        if: steps.crowdin_secrets.outputs.configured == 'true'
         run: sudo chown -R $USER:$USER .
 
       - name: Check for translation changes
+        if: steps.crowdin_secrets.outputs.configured == 'true'
         id: changes
         run: |
           git diff --quiet && echo "changed=false" >> "$GITHUB_OUTPUT" || echo "changed=true" >> "$GITHUB_OUTPUT"
 
       - name: Create Pull Request
-        if: steps.changes.outputs.changed == 'true'
+        if: steps.crowdin_secrets.outputs.configured == 'true' && steps.changes.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v6
         id: cpr
         with:

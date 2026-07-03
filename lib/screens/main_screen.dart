@@ -11,11 +11,9 @@ import '../services/local_music_service.dart';
 import '../services/recommendation_service.dart';
 import '../services/theme_service.dart';
 import '../services/update_service.dart';
-import '../services/usage_time_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/navigation_helper.dart';
 import '../widgets/widgets.dart';
-import '../widgets/support_dialog.dart';
 import '../l10n/app_localizations.dart';
 import 'home_screen.dart';
 import 'library_screen.dart';
@@ -43,12 +41,6 @@ class _MainScreenState extends State<MainScreen> {
     LibraryScreen(),
     SearchScreen(),
   ];
-
-  @override
-  void dispose() {
-    UsageTimeService().disposeService();
-    super.dispose();
-  }
 
   @override
   void initState() {
@@ -95,216 +87,301 @@ class _MainScreenState extends State<MainScreen> {
         libraryProvider.initialize();
       }
 
-      // Initialize usage time tracking for donation dialog
-      UsageTimeService().initialize();
-
-      // Check periodically if we should show the support dialog (every 2 minutes)
-      _startUsageTimeChecker();
-
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) _checkForUpdate();
       });
     });
   }
 
-  void _startUsageTimeChecker() {
-    // Check every 2 minutes if we should show the support dialog
-    Future.delayed(const Duration(minutes: 2), () {
-      if (!mounted) return;
-
-      final usageService = UsageTimeService();
-      if (usageService.shouldShowDialog) {
-        _showSupportDialog();
-      } else {
-        // Continue checking
-        _startUsageTimeChecker();
-      }
-    });
-  }
-
-  void _showSupportDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => const SupportDialog(),
-      barrierDismissible: true,
-    );
-  }
-
   Future<void> _checkForUpdate() async {
-    final release = await UpdateService.checkForUpdate();
+    final currentVersion = await UpdateService.getCurrentVersion();
+    final release = await UpdateService.checkForUpdate(
+      currentVersion: currentVersion,
+    );
     if (release == null || !mounted) return;
-    _showUpdateDialog(release);
+    _showUpdateDialog(release, currentVersion);
   }
 
-  void _showUpdateDialog(ReleaseInfo release) {
+  void _showUpdateDialog(ReleaseInfo release, String currentVersion) {
     final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final changelog = UpdateService.stripMarkdown(release.body);
+    final canInstallInApp = !kIsWeb &&
+        Platform.isAndroid &&
+        UpdateService.findAndroidApkAsset(release) != null;
+    var isDownloading = false;
+    var progress = 0.0;
+    var statusText = '';
 
     showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480, maxHeight: 600),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppTheme.appleMusicRed, AppTheme.appleMusicPink],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480, maxHeight: 600),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppTheme.appleMusicRed, AppTheme.appleMusicPink],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20)),
                   ),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      CupertinoIcons.arrow_up_circle_fill,
-                      color: Colors.white,
-                      size: 40,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      l10n.updateAvailable,
-                      style: const TextStyle(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        CupertinoIcons.arrow_up_circle_fill,
                         color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                        size: 40,
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      l10n.updateAvailableSubtitle,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        _VersionBadge(
-                          label: l10n.updateCurrentVersion(
-                            UpdateService.currentVersion,
-                          ),
-                          color: Colors.white24,
+                      const SizedBox(height: 12),
+                      Text(
+                        l10n.updateAvailable,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(width: 8),
-                        const Icon(
-                          CupertinoIcons.arrow_right,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        l10n.updateAvailableSubtitle,
+                        style: const TextStyle(
                           color: Colors.white70,
-                          size: 16,
+                          fontSize: 14,
                         ),
-                        const SizedBox(width: 8),
-                        _VersionBadge(
-                          label: l10n.updateLatestVersion(release.version),
-                          color: Colors.white.withValues(alpha: 0.3),
-                          bold: true,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              if (changelog.isNotEmpty)
-                Flexible(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          l10n.whatsNew,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white54 : Colors.black45,
-                            letterSpacing: 0.8,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          _VersionBadge(
+                            label: l10n.updateCurrentVersion(currentVersion),
+                            color: Colors.white24,
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Flexible(
-                          child: Scrollbar(
-                            thumbVisibility: true,
-                            child: SingleChildScrollView(
-                              child: Text(
-                                changelog,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  height: 1.5,
-                                  color:
-                                      isDark ? Colors.white70 : Colors.black87,
+                          const SizedBox(width: 8),
+                          const Icon(
+                            CupertinoIcons.arrow_right,
+                            color: Colors.white70,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          _VersionBadge(
+                            label: l10n.updateLatestVersion(release.version),
+                            color: Colors.white.withValues(alpha: 0.3),
+                            bold: true,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                if (changelog.isNotEmpty)
+                  Flexible(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            l10n.whatsNew,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white54 : Colors.black45,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Flexible(
+                            child: Scrollbar(
+                              thumbVisibility: true,
+                              child: SingleChildScrollView(
+                                child: Text(
+                                  changelog,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    height: 1.5,
+                                    color: isDark
+                                        ? Colors.white70
+                                        : Colors.black87,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (isDownloading)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        LinearProgressIndicator(
+                          value: progress > 0 ? progress : null,
+                          color: AppTheme.appleMusicRed,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          statusText,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark ? Colors.white70 : Colors.black54,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(ctx).pop(),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: isDownloading
+                              ? null
+                              : () => Navigator.of(ctx).pop(),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                        ),
-                        child: Text(l10n.remindLater),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          Navigator.of(ctx).pop();
-                          final uri = Uri.parse(release.htmlUrl);
-                          if (await canLaunchUrl(uri)) {
-                            await launchUrl(
-                              uri,
-                              mode: LaunchMode.externalApplication,
-                            );
-                          }
-                        },
-                        icon: const Icon(
-                          CupertinoIcons.cloud_download,
-                          size: 18,
-                        ),
-                        label: Text(l10n.downloadUpdate),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          backgroundColor: AppTheme.appleMusicRed,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          child: Text(l10n.remindLater),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton.icon(
+                          onPressed: isDownloading
+                              ? null
+                              : () async {
+                                  if (!canInstallInApp) {
+                                    Navigator.of(ctx).pop();
+                                    await _openReleasePage(release);
+                                    return;
+                                  }
+                                  setDialogState(() {
+                                    isDownloading = true;
+                                    progress = 0;
+                                    statusText = 'Downloading APK...';
+                                  });
+                                  await _downloadAndInstallUpdate(
+                                    ctx,
+                                    release,
+                                    onProgress: (received, total) {
+                                      if (!ctx.mounted) return;
+                                      setDialogState(() {
+                                        progress = total > 0
+                                            ? (received / total).clamp(0.0, 1.0)
+                                            : 0.0;
+                                        statusText = total > 0
+                                            ? 'Downloading APK ${(progress * 100).round()}%'
+                                            : 'Downloading APK...';
+                                      });
+                                    },
+                                    onInstalling: () {
+                                      if (!ctx.mounted) return;
+                                      setDialogState(() {
+                                        statusText = 'Opening installer...';
+                                      });
+                                    },
+                                  );
+                                  if (ctx.mounted) {
+                                    setDialogState(() {
+                                      isDownloading = false;
+                                    });
+                                  }
+                                },
+                          icon: const Icon(
+                            CupertinoIcons.cloud_download,
+                            size: 18,
+                          ),
+                          label: Text(l10n.downloadUpdate),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            backgroundColor: AppTheme.appleMusicRed,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _openReleasePage(ReleaseInfo release) async {
+    final uri = Uri.parse(release.htmlUrl);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _downloadAndInstallUpdate(
+    BuildContext dialogContext,
+    ReleaseInfo release, {
+    required void Function(int received, int total) onProgress,
+    required VoidCallback onInstalling,
+  }) async {
+    try {
+      final apk = await UpdateService.downloadAndroidApk(
+        release,
+        onProgress: onProgress,
+      );
+      onInstalling();
+
+      final canInstall = await UpdateService.canRequestPackageInstalls();
+      if (!canInstall) {
+        await UpdateService.openUnknownSourcesSettings();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Allow Musly to install unknown apps, then tap Download again.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
+
+      await UpdateService.installAndroidApk(apk);
+      if (dialogContext.mounted) {
+        Navigator.of(dialogContext).pop();
+      }
+    } catch (e) {
+      debugPrint('Update install failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Update failed: $e')),
+        );
+      }
+    }
   }
 
   void _openNowPlaying() {

@@ -9,7 +9,10 @@ on:
         type: string
 
 env:
-  FLUTTER_VERSION: '3.41.7'
+  FLUTTER_VERSION: '3.41.5'
+
+permissions:
+  contents: read
 
 jobs:
   # Validate secrets exist
@@ -50,11 +53,6 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
       
-      - name: Setup Dart SDK
-        uses: dart-lang/setup-dart@v1
-        with:
-          sdk: 'stable'
-      
       - name: Verify Dart SDK Version
         run: |
           DART_VERSION=$(dart --version | grep -oP 'Dart SDK version: \K[0-9]+\.[0-9]+\.[0-9]+' | head -1)
@@ -91,7 +89,7 @@ jobs:
           echo "Building with analytics configured..."
           flutter build apk --release \
             --dart-define=COUNTLY_SERVER_URL="$COUNTLY_SERVER_URL" \
-            --dart-define=COUNTLY_APP_KEY="$COUNTLY_APP_KEY" 2>&1 | grep -v "$COUNTLY_APP_KEY" || true
+            --dart-define=COUNTLY_APP_KEY="$COUNTLY_APP_KEY"
       
       - name: Build AppBundle (with encrypted analytics)
         env:
@@ -101,7 +99,7 @@ jobs:
           echo "::add-mask::$COUNTLY_APP_KEY"
           flutter build appbundle --release \
             --dart-define=COUNTLY_SERVER_URL="$COUNTLY_SERVER_URL" \
-            --dart-define=COUNTLY_APP_KEY="$COUNTLY_APP_KEY" 2>&1 | grep -v "$COUNTLY_APP_KEY" || true
+            --dart-define=COUNTLY_APP_KEY="$COUNTLY_APP_KEY"
       
       - name: Upload APKs
         uses: actions/upload-artifact@v4
@@ -122,11 +120,6 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
       
-      - name: Setup Dart SDK
-        uses: dart-lang/setup-dart@v1
-        with:
-          sdk: 'stable'
-      
       - name: Verify Dart SDK Version
         run: |
           DART_VERSION=$(dart --version | grep -oP 'Dart SDK version: \K[0-9]+\.[0-9]+\.[0-9]+' | head -1)
@@ -143,7 +136,7 @@ jobs:
           echo "::add-mask::$COUNTLY_APP_KEY"
           flutter build ios --release --no-codesign \
             --dart-define=COUNTLY_SERVER_URL="$COUNTLY_SERVER_URL" \
-            --dart-define=COUNTLY_APP_KEY="$COUNTLY_APP_KEY" 2>&1 | grep -v "$COUNTLY_APP_KEY" || true
+            --dart-define=COUNTLY_APP_KEY="$COUNTLY_APP_KEY"
       
       - name: Create IPA
         run: |
@@ -173,11 +166,6 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
       
-      - name: Setup Dart SDK
-        uses: dart-lang/setup-dart@v1
-        with:
-          sdk: 'stable'
-      
       - name: Verify Dart SDK Version
         shell: pwsh
         run: |
@@ -196,7 +184,7 @@ jobs:
           Write-Host "::add-mask::$key"
           flutter build windows --release `
             --dart-define=COUNTLY_SERVER_URL="$env:COUNTLY_SERVER_URL" `
-            --dart-define=COUNTLY_APP_KEY="$key" 2>&1 | Select-String -Pattern $key -NotMatch
+            --dart-define=COUNTLY_APP_KEY="$key"
       
       - name: Install NSIS
         run: choco install nsis -y
@@ -235,11 +223,6 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
       
-      - name: Setup Dart SDK
-        uses: dart-lang/setup-dart@v1
-        with:
-          sdk: 'stable'
-      
       - name: Verify Dart SDK Version
         run: |
           DART_VERSION=$(dart --version | grep -oP 'Dart SDK version: \K[0-9]+\.[0-9]+\.[0-9]+' | head -1)
@@ -256,7 +239,7 @@ jobs:
           echo "::add-mask::$COUNTLY_APP_KEY"
           flutter build linux --release \
             --dart-define=COUNTLY_SERVER_URL="$COUNTLY_SERVER_URL" \
-            --dart-define=COUNTLY_APP_KEY="$COUNTLY_APP_KEY" 2>&1 | grep -v "$COUNTLY_APP_KEY" || true
+            --dart-define=COUNTLY_APP_KEY="$COUNTLY_APP_KEY"
       
       - name: Upload Linux Build
         uses: actions/upload-artifact@v4
@@ -277,11 +260,6 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
       
-      - name: Setup Dart SDK
-        uses: dart-lang/setup-dart@v1
-        with:
-          sdk: 'stable'
-      
       - name: Verify Dart SDK Version
         run: |
           DART_VERSION=$(dart --version | grep -oP 'Dart SDK version: \K[0-9]+\.[0-9]+\.[0-9]+' | head -1)
@@ -298,7 +276,7 @@ jobs:
           echo "::add-mask::$COUNTLY_APP_KEY"
           flutter build macos --release \
             --dart-define=COUNTLY_SERVER_URL="$COUNTLY_SERVER_URL" \
-            --dart-define=COUNTLY_APP_KEY="$COUNTLY_APP_KEY" 2>&1 | grep -v "$COUNTLY_APP_KEY" || true
+            --dart-define=COUNTLY_APP_KEY="$COUNTLY_APP_KEY"
       
       - name: Create DMG
         run: |
@@ -352,6 +330,8 @@ jobs:
   release:
     runs-on: ubuntu-latest
     needs: [build-android, build-ios, build-windows, build-linux, build-macos]
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -360,8 +340,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "v${{ github.event.inputs.version }}" -m "Release v${{ github.event.inputs.version }}"
-          git push origin "v${{ github.event.inputs.version }}"
+          TAG="v${{ github.event.inputs.version }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists; reusing it for this release."
+          else
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+          fi
 
       - name: Download Android Artifacts
         uses: actions/download-artifact@v4
@@ -442,7 +427,7 @@ jobs:
             - `musly-linux-x64.tar.gz` (extract and run musly)
 
             ### 📝 Changelog
-            See [CHANGELOG.md](https://github.com/dddevid/Musly/blob/master/CHANGELOG.md)
+            See [CHANGELOG.md](https://github.com/lvshp/Musly/blob/master/CHANGELOG.md)
 
             ### 🌍 Translations
             Contribute translations at [Crowdin](https://crowdin.com/project/musly)

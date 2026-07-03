@@ -1,5 +1,10 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show MethodChannel, rootBundle;
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 class ReleaseAsset {
   final String name;
@@ -45,10 +50,13 @@ class ReleaseInfo {
 }
 
 class UpdateService {
-  static const String currentVersion = '1.0.13';
+  static const String repositoryUrl = 'https://github.com/lvshp/Musly';
 
   static const String _apiUrl =
-      'https://api.github.com/repos/dddevid/Musly/releases/latest';
+      'https://api.github.com/repos/lvshp/Musly/releases/latest';
+
+  static const MethodChannel _installerChannel =
+      MethodChannel('com.devid.musly/update_installer');
 
   static final _dio = Dio(
     BaseOptions(
@@ -61,14 +69,29 @@ class UpdateService {
     ),
   );
 
-  static Future<ReleaseInfo?> checkForUpdate() async {
+  static Future<String> getCurrentVersion() async {
     try {
+      final pubspec = await rootBundle.loadString('pubspec.yaml');
+      final match =
+          RegExp(r'^version:\s*([^\s]+)', multiLine: true).firstMatch(pubspec);
+      final rawVersion = match?.group(1);
+      if (rawVersion == null || rawVersion.isEmpty) return '0.0.0';
+      return rawVersion.split('+').first;
+    } catch (e) {
+      debugPrint('UpdateService: failed to read app version - $e');
+      return '0.0.0';
+    }
+  }
+
+  static Future<ReleaseInfo?> checkForUpdate({String? currentVersion}) async {
+    try {
+      final version = currentVersion ?? await getCurrentVersion();
       final response = await _dio.get<Map<String, dynamic>>(_apiUrl);
       final data = response.data;
       if (data == null) return null;
 
       final release = ReleaseInfo.fromJson(data);
-      if (_isNewer(release.version, currentVersion)) {
+      if (_isNewer(release.version, version)) {
         return release;
       }
       return null;
@@ -76,6 +99,70 @@ class UpdateService {
       debugPrint('UpdateService: check failed – $e');
       return null;
     }
+  }
+
+  static ReleaseAsset? findAndroidApkAsset(ReleaseInfo release) {
+    final apkAssets = release.assets
+        .where((asset) => asset.name.toLowerCase().endsWith('.apk'))
+        .toList();
+    if (apkAssets.isEmpty) return null;
+
+    for (final asset in apkAssets) {
+      final name = asset.name.toLowerCase();
+      if (name.contains('release') || name.contains('android')) {
+        return asset;
+      }
+    }
+    return apkAssets.first;
+  }
+
+  static Future<File> downloadAndroidApk(
+    ReleaseInfo release, {
+    required void Function(int received, int total) onProgress,
+  }) async {
+    final asset = findAndroidApkAsset(release);
+    if (asset == null) {
+      throw StateError('No Android APK asset found for ${release.tagName}');
+    }
+
+    final directory = await getTemporaryDirectory();
+    final fileName = asset.name.replaceAll(RegExp(r'[^\w.\-]+'), '_');
+    final file = File(p.join(directory.path, fileName));
+
+    await _dio.download(
+      asset.browserDownloadUrl,
+      file.path,
+      deleteOnError: true,
+      onReceiveProgress: onProgress,
+      options: Options(
+        followRedirects: true,
+        responseType: ResponseType.bytes,
+      ),
+    );
+
+    return file;
+  }
+
+  static Future<bool> canRequestPackageInstalls() async {
+    if (!Platform.isAndroid) return false;
+    return await _installerChannel.invokeMethod<bool>(
+          'canRequestPackageInstalls',
+        ) ??
+        false;
+  }
+
+  static Future<void> openUnknownSourcesSettings() async {
+    if (!Platform.isAndroid) return;
+    await _installerChannel.invokeMethod<void>('openUnknownSourcesSettings');
+  }
+
+  static Future<void> installAndroidApk(File apk) async {
+    if (!Platform.isAndroid) {
+      throw UnsupportedError('APK install is only supported on Android');
+    }
+    await _installerChannel.invokeMethod<void>('installApk', {
+      'path': apk.path,
+    });
   }
 
   static bool _isNewer(String remote, String current) {

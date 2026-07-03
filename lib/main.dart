@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 import 'package:window_manager/window_manager.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
-import 'package:safe_device/safe_device.dart';
 
 import 'l10n/app_localizations.dart';
 import 'models/server_config.dart';
@@ -47,92 +45,8 @@ Future<void> _showPrivacyPolicyIfNeeded() async {
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-/// Checks if the app is running on an emulator/simulator
-Future<bool> _isRunningOnEmulator() async {
-  if (kDebugMode) return false;
-  if (kIsWeb) return false;
-  if (!Platform.isAndroid && !Platform.isIOS) return false;
-
-  return !(await SafeDevice.isRealDevice);
-}
-
-/// Widget shown when app is running on emulator
-class _EmulatorWarningScreen extends StatelessWidget {
-  const _EmulatorWarningScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: Builder(
-        builder: (context) {
-          final l10n = AppLocalizations.of(context)!;
-          return Scaffold(
-            backgroundColor: Colors.black,
-            body: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.block_rounded,
-                      size: 80,
-                      color: Colors.red,
-                    ),
-                    const SizedBox(height: 32),
-                    Text(
-                      l10n.emulatorDetected,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      l10n.emulatorNotAllowed,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                        height: 1.5,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 48),
-                    FilledButton.icon(
-                      onPressed: () {
-                        // Exit the app
-                        exit(0);
-                      },
-                      icon: const Icon(Icons.exit_to_app),
-                      label: const Text('Exit App'),
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size(200, 50),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  final isEmulator = await _isRunningOnEmulator();
-  if (isEmulator) {
-    runApp(const _EmulatorWarningScreen());
-    return;
-  }
 
   JustAudioMediaKit.ensureInitialized(linux: true, windows: false);
 
