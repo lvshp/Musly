@@ -155,7 +155,7 @@ jobs:
 
   # Windows Build
   build-windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
     needs: check-secrets
     steps:
       - uses: actions/checkout@v4
